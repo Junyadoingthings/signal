@@ -6,6 +6,7 @@ services:
     environment:
       SIGNAL_ENV: prod
       SIGNAL_DATABASE_URL: sqlite:////data/signal.db
+      SIGNAL_DATA_DIR: /data
       SIGNAL_FRONTEND_ORIGIN: http://localhost:8080
       SIGNAL_COOKIE_SECURE: ${SIGNAL_COOKIE_SECURE:-true}
     volumes:
