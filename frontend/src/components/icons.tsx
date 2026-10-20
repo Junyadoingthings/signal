@@ -80,3 +80,15 @@ export const PlusIcon = (p: SVGProps<SVGSVGElement>) => (
     <path d="M8 3v10M3 8h10" />
   </Icon>
 );
+
+export const UploadIcon = (p: SVGProps<SVGSVGElement>) => (
+  <Icon {...p}>
+    <path d="M8 10.5V2.5M5 5.5l3-3 3 3M2.5 10v2.25c0 .7.55 1.25 1.25 1.25h8.5c.7 0 1.25-.55 1.25-1.25V10" />
+  </Icon>
+);
+
+export const IngestIcon = (p: SVGProps<SVGSVGElement>) => (
+  <Icon {...p}>
+    <path d="M2 4.5h12M2 8h7M2 11.5h4.5M11.5 9v5M9.25 11.75 11.5 14l2.25-2.25" />
+  </Icon>
+);

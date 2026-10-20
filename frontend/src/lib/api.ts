@@ -29,6 +29,10 @@ export function setCsrfToken(token: string | null): void {
   csrfToken = token;
 }
 
+export function getCsrfToken(): string | null {
+  return csrfToken;
+}
+
 export function setUnauthenticatedHandler(fn: (() => void) | null): void {
   onUnauthenticated = fn;
 }

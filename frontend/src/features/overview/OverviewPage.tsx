@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { clsx } from "clsx";
+import { Link } from "react-router";
 import { PageHeader, Panel } from "@/components/ui";
 import { api } from "@/lib/api";
 import { formatNumber, formatRelative, formatTimestamp } from "@/lib/format";
@@ -52,7 +53,16 @@ export function OverviewPage() {
           ) : quiet ? (
             <p className="text-fg-muted">
               <span className="text-fg">All quiet.</span> {formatNumber(s.alerts_open)} open alerts
-              {s.events_total === 0 ? " · no events ingested yet." : "."}
+              {s.events_total === 0 ? (
+                <>
+                  {" · no events ingested yet. "}
+                  <Link to="/ingest" className="text-fg underline-offset-4 hover:underline">
+                    Ingest logs
+                  </Link>
+                </>
+              ) : (
+                "."
+              )}
             </p>
           ) : (
             <p className="text-fg-muted">

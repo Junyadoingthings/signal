@@ -4,9 +4,31 @@ A self-hosted mini SIEM and detection console: ingest security logs, normalise t
 run ATT&CK-mapped detections, correlate alerts into incidents and triage them from a
 keyboard-first console.
 
-> **Status: Phase 1 of 7 (foundation).** Auth, roles, audit trail, database schema,
-> design system and app shell are in place. Ingestion and detection land next. This
-> README is rewritten in full at the end (Phase 7).
+> **Status: Phase 2 of 7 (ingestion).** Auth, roles, audit trail, design system, and
+> ingestion for every v1 source are in place. Detection lands next. This README is
+> rewritten in full at the end (Phase 7).
+
+## Ingest
+
+Upload in the UI (drag and drop) or with the API. The format is detected from content.
+
+| Source | Accepted as |
+|---|---|
+| Linux auth | `auth.log` / `secure`, classic or RFC 3339 syslog |
+| Windows Security & Sysmon | `.evtx`, `evtx_dump` JSON, PowerShell `Get-WinEvent \| ConvertTo-Json` (UTF-8 or UTF-16) |
+| Web server | nginx / Apache Common or Combined |
+| Wazuh | `alerts.json`; Windows/Sysmon and sshd alerts are unpacked into the same schema |
+| Anything else | JSON Lines with a field mapping |
+
+Live: create an ingest token (Ingest → Live ingest tokens), then on the machine with the log:
+
+```bash
+export SIGNAL_INGEST_TOKEN=sig_...
+python3 tools/signal_tail.py /var/log/auth.log --format linux_auth --url https://your-signal-host
+```
+
+`signal_tail.py` is standard-library only, follows rotation, resumes from a state file,
+and is idempotent on retry.
 
 ## Run it
 
@@ -41,5 +63,6 @@ make lint       # ruff, mypy --strict, eslint (strict type-checked), prettier, t
 ```
 backend/   FastAPI + SQLModel API (Python 3.12), Alembic migrations, pytest
 frontend/  React 18 + TypeScript + Vite + Tailwind v4 console, Vitest
+tools/     signal_tail.py live shipper
 scripts/   dev runner
 ```

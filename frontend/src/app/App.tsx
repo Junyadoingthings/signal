@@ -4,6 +4,8 @@ import { createBrowserRouter, Navigate, Outlet, RouterProvider, useLocation } fr
 import { AuditPage } from "@/features/admin/AuditPage";
 import { UsersPage } from "@/features/admin/UsersPage";
 import { LoginPage } from "@/features/auth/LoginPage";
+import { BatchPage } from "@/features/ingest/BatchPage";
+import { IngestPage } from "@/features/ingest/IngestPage";
 import { OverviewPage } from "@/features/overview/OverviewPage";
 import { ApiError } from "@/lib/api";
 import { AuthProvider, useAuth } from "@/lib/auth";
@@ -44,6 +46,8 @@ export const routes = [
         element: <Shell />,
         children: [
           { index: true, element: <OverviewPage /> },
+          { path: "ingest", element: <IngestPage /> },
+          { path: "ingest/batches/:id", element: <BatchPage /> },
           {
             path: "admin/users",
             element: (
