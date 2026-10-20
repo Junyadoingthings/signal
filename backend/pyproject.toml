@@ -1,0 +1,66 @@
+[project]
+name = "signal-backend"
+version = "0.1.0"
+description = "SIGNAL — lightweight SIEM & detection console (API)"
+requires-python = ">=3.12"
+dependencies = [
+    "alembic>=1.20.0",
+    "argon2-cffi>=25.1.0",
+    "defusedxml>=0.7.1",
+    "fastapi>=0.156.2",
+    "pydantic>=2",
+    "pydantic-settings>=2.16.1",
+    "python-evtx>=0.8.1",
+    "python-multipart>=0.0.32",
+    "pyyaml>=6.0.3",
+    "slowapi>=0.1.10",
+    "sqlmodel>=0.0.48",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.13.4,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "mypy>=2.4.0",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.17.1",
+    "types-pyyaml>=6.0.12.20260906",
+]
+
+[tool.uv.build-backend]
+module-name = "app"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF", "N", "C4", "PT"]
+ignore = ["B008"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106"]
+"src/app/storage/migrations/**" = ["N999", "E501"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+mypy_path = "src"
+explicit_package_bases = true
+exclude = ["src/app/storage/migrations/versions/"]
+
+[[tool.mypy.overrides]]
+module = ["slowapi.*", "Evtx.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "."]
+addopts = "-q"
