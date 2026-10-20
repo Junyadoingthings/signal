@@ -1,0 +1,206 @@
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+@import "tailwindcss";
+@import "./tokens.css";
+
+/* Expose tokens to Tailwind utilities (bg-surface-1, text-fg-muted, font-mono …). */
+@theme inline {
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-data);
+
+  --color-bg: var(--bg);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-overlay: var(--overlay);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-faint: var(--fg-faint);
+  --color-fg-inverse: var(--fg-inverse);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --color-sev-low: var(--sev-low);
+  --color-sev-medium: var(--sev-medium);
+  --color-sev-high: var(--sev-high);
+  --color-sev-critical: var(--sev-critical);
+  --color-ok: var(--ok);
+  --color-danger: var(--danger);
+
+  --text-2xs: var(--fs-2xs);
+  --text-xs: var(--fs-xs);
+  --text-sm: var(--fs-sm);
+  --text-md: var(--fs-md);
+  --text-lg: var(--fs-lg);
+  --text-xl: var(--fs-xl);
+  --text-2xl: var(--fs-2xl);
+  --text-display: var(--fs-display);
+
+  --radius-xs: var(--rad-xs);
+  --radius-sm: var(--rad-sm);
+  --radius-md: var(--rad-md);
+  --radius-lg: var(--rad-lg);
+
+  --ease-out: var(--ease-std);
+  --shadow-pop: var(--elev-pop);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-ui);
+    font-size: var(--fs-sm);
+    line-height: 1.5;
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3 {
+    letter-spacing: var(--tracking-tight);
+    font-weight: 600;
+  }
+
+  /* Data is always mono with tabular figures so columns line up. */
+  code,
+  kbd,
+  samp,
+  .font-mono {
+    font-family: var(--font-data);
+    font-variant-numeric: tabular-nums slashed-zero;
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::selection {
+    background: var(--accent-soft);
+    color: var(--fg);
+  }
+
+  /* Accent focus ring, only for keyboard focus. */
+  :focus-visible {
+    outline: 2px solid var(--accent-ring);
+    outline-offset: 2px;
+    border-radius: var(--rad-xs);
+  }
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+}
+
+@layer components {
+  /* Faint graph-paper texture: used only on canvases (graph, timeline, trace). */
+  .canvas-grid {
+    background-image: radial-gradient(var(--grid-dot) 1px, transparent 1px);
+    background-size: 16px 16px;
+  }
+
+  .hairline {
+    border: var(--hairline) solid var(--border);
+  }
+
+  .label-caps {
+    font-size: var(--fs-2xs);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    font-weight: 500;
+  }
+
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--surface-2) 0%,
+      var(--surface-3) 50%,
+      var(--surface-2) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-sheen 1.4s var(--ease-in-out) infinite;
+    border-radius: var(--rad-xs);
+  }
+}
+
+@keyframes skeleton-sheen {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
+/* ---- motion primitives (150–300ms, ease-out, disabled for reduced motion) */
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  50% {
+    box-shadow: 0 0 0 3px var(--sev-critical-soft);
+  }
+}
+
+.dialog-pop[open] {
+  animation: pop-in var(--dur-base) var(--ease-std);
+}
+.dialog-pop::backdrop {
+  animation: fade-in var(--dur-base) var(--ease-std);
+}
+.palette-pop {
+  animation: pop-in var(--dur-base) var(--ease-std);
+}
+.palette-overlay {
+  animation: fade-in var(--dur-fast) var(--ease-std);
+}
+.sev-breathing {
+  animation: breathe 2.4s var(--ease-in-out) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog-pop[open],
+  .dialog-pop::backdrop,
+  .palette-pop,
+  .palette-overlay,
+  .sev-breathing {
+    animation: none;
+  }
+}
