@@ -18,7 +18,15 @@ from sqlmodel import Session, col
 from app.ingest.dedup import DedupKeyer
 from app.ingest.entities import EdgeKey, EntityKey, Seen, aggregate
 from app.ingest.types import NormalizedEvent, Parsed, ParseResult, Unparsed
-from app.storage.models import Entity, EntityEdge, Event, IngestBatch, UnparsedEvent, utcnow
+from app.storage.models import (
+    AccountSid,
+    Entity,
+    EntityEdge,
+    Event,
+    IngestBatch,
+    UnparsedEvent,
+    utcnow,
+)
 
 log = logging.getLogger("signal.ingest")
 
@@ -159,6 +167,60 @@ def _upsert_edges(db: Session, edges: dict[EdgeKey, Seen], ids: dict[EntityKey, 
     db.execute(stmt, rows)
 
 
+# Well-known SIDs aren't worth mapping (SYSTEM, LOCAL SERVICE, NETWORK SERVICE, NULL SID).
+_SKIP_SIDS = {"S-1-5-18", "S-1-5-19", "S-1-5-20", "S-1-0-0"}
+
+
+def _resolve_member_sids(db: Session, events: list[NormalizedEvent]) -> None:
+    """Learn SID → name from this chunk, then name group members that were logged by SID
+    only. The chunk's own mappings win over older ones (accounts can be renamed)."""
+    learned: dict[str, tuple[str, str | None, Any]] = {}
+    for ev in events:
+        sid = ev.extra.get("target_sid")
+        if isinstance(sid, str) and ev.user and sid not in _SKIP_SIDS:
+            learned[sid] = (ev.user, ev.extra.get("user_domain"), ev.timestamp)
+    if learned:
+        t = AccountSid.__table__  # type: ignore[attr-defined]
+        stmt = _dialect_insert(db, t)
+        stmt = stmt.on_conflict_do_update(
+            index_elements=["sid"],
+            set_={
+                "name": stmt.excluded.name,
+                "domain": stmt.excluded.domain,
+                "last_seen": stmt.excluded.last_seen,
+            },
+        )
+        db.execute(
+            stmt,
+            [
+                {"sid": s, "name": n[:255], "domain": d, "last_seen": ts}
+                for s, (n, d, ts) in learned.items()
+            ],
+        )
+
+    wanted = {
+        ev.extra["member_sid"]
+        for ev in events
+        if ev.user is None and isinstance(ev.extra.get("member_sid"), str)
+    }
+    if not wanted:
+        return
+    names = {s: n for s, (n, _, _) in learned.items() if s in wanted}
+    missing = list(wanted - names.keys())
+    if missing:
+        rows = db.execute(
+            select(col(AccountSid.sid), col(AccountSid.name)).where(
+                col(AccountSid.sid).in_(missing)
+            )
+        ).all()
+        names.update({r[0]: r[1] for r in rows})
+    for ev in events:
+        sid = ev.extra.get("member_sid")
+        if ev.user is None and isinstance(sid, str) and sid in names:
+            ev.user = names[sid]
+            ev.extra["user_from_sid"] = True
+
+
 def _existing(db: Session, column: Any, keys: list[str]) -> set[str]:
     found: set[str] = set()
     for i in range(0, len(keys), 500):
@@ -198,6 +260,7 @@ def store_chunk(
                 }
             )
 
+    _resolve_member_sids(db, [ev for _, ev in keyed])
     existing = _existing(db, col(Event.dedup_hash), [k for k, _ in keyed])
     fresh = [(k, ev) for k, ev in keyed if k not in existing]
     seen_unparsed = _existing(

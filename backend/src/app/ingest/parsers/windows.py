@@ -281,6 +281,8 @@ def map_event(
         ev.action = "logon"
         ev.outcome = Outcome.success if event_id == 4624 else Outcome.failure
         ev.user = domain_user("TargetUserName", "TargetDomainName")
+        if sid := _s(data, "TargetUserSid"):
+            ev.extra["target_sid"] = sid
         ev.src_ip = _s(data, "IpAddress")
         ev.src_port = clean_port(data.get("IpPort"))
         ev.process_name = basename(data.get("ProcessName"))
@@ -307,6 +309,8 @@ def map_event(
     elif key == ("security", 4672):
         ev.action, ev.outcome = "special_privileges_assigned", Outcome.success
         ev.user = domain_user("SubjectUserName", "SubjectDomainName")
+        if sid := _s(data, "SubjectUserSid"):
+            ev.extra["target_sid"] = sid
         privs = [p.strip() for p in (_s(data, "PrivilegeList") or "").split() if p.strip()]
         ev.extra["privileges"] = privs
         ev.tags.append("privileged")

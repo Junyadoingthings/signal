@@ -1,0 +1,25 @@
+id: sig-def-proxy-execution
+title: Signed binary proxy execution with a remote payload
+description: >
+  mshta, regsvr32 or rundll32 started with a URL on the command line (for example
+  regsvr32 /i:http://… scrobj.dll, or mshta http://…/x.hta). Signed Windows binaries
+  are used to run attacker code past application allow-listing.
+severity: high
+attack:
+  tactic: stealth
+  techniques: [T1218.005, T1218.010, T1218.011]
+logic:
+  type: match
+  condition:
+    all:
+      - process_name|in: [mshta.exe, regsvr32.exe, rundll32.exe]
+      - process_cmdline|re: '(?i)(https?|ftp)://|javascript:|vbscript:'
+  suppress:
+    by: [host, user]
+    window: 1h
+false_positives:
+  - Legacy line-of-business apps that launch HTA files from an intranet server.
+references:
+  - https://attack.mitre.org/techniques/T1218/005/
+  - https://attack.mitre.org/techniques/T1218/010/
+  - https://attack.mitre.org/techniques/T1218/011/

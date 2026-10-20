@@ -1,0 +1,27 @@
+id: sig-exec-encoded-powershell
+title: Encoded PowerShell command
+description: >
+  PowerShell started with -EncodedCommand (or a short form such as -enc / -e) and a
+  base64 payload, or with a very long base64 blob on the command line. Encoding hides
+  the script from casual review and simple string matching.
+severity: high
+attack:
+  tactic: execution
+  techniques: [T1059.001, T1027.010]
+logic:
+  type: match
+  condition:
+    all:
+      - process_name|in: [powershell.exe, pwsh.exe, powershell_ise.exe]
+      - process_cmdline|re:
+          - '(?i)\s[-/]e(?:n|nc|nco|ncod|ncode|ncoded|ncodedc|ncodedco|ncodedcom|ncodedcomm|ncodedcomma|ncodedcomman|ncodedcommand)?\s+[A-Za-z0-9+/=]{16,}'
+          - '[A-Za-z0-9+/]{120,}={0,2}'
+  suppress:
+    by: [host, user]
+    window: 1h
+false_positives:
+  - Some management agents (SCCM, Intune, monitoring) pass encoded commands. Decode the
+    payload and compare with the agent's known behaviour before closing.
+references:
+  - https://attack.mitre.org/techniques/T1059/001/
+  - https://attack.mitre.org/techniques/T1027/010/

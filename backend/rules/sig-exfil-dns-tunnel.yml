@@ -1,0 +1,31 @@
+id: sig-exfil-dns-tunnel
+title: DNS tunnelling (long or high-entropy subdomains)
+description: >
+  Repeated DNS queries from one host to one domain where the subdomain part is long or
+  looks random (high Shannon entropy), as produced by encoding data into hostnames
+  (e.g. base64 chunks). Sysmon event 22.
+severity: high
+attack:
+  tactic: exfiltration
+  techniques: [T1048.003, T1071.004]
+logic:
+  type: threshold
+  condition:
+    all:
+      - action: dns_query
+      - any:
+          - dns_subdomain|len_gte: 40
+          - dns_longest_label|gte: 30
+          - all:
+              - dns_subdomain|len_gte: 16
+              - dns_subdomain|entropy_gte: 3.8
+  group_by: [host, dns_domain]
+  window: 10m
+  threshold: 10
+false_positives:
+  - CDNs and anti-virus cloud lookups that encode hashes in hostnames (allow-list the
+    vendor domain after checking it).
+  - DKIM / SPF / anti-spam DNS lookups on mail servers.
+references:
+  - https://attack.mitre.org/techniques/T1048/003/
+  - https://attack.mitre.org/techniques/T1071/004/

@@ -4,9 +4,19 @@ A self-hosted mini SIEM and detection console: ingest security logs, normalise t
 run ATT&CK-mapped detections, correlate alerts into incidents and triage them from a
 keyboard-first console.
 
-> **Status: Phase 2 of 7 (ingestion).** Auth, roles, audit trail, design system, and
-> ingestion for every v1 source are in place. Detection lands next. This README is
+> **Status: Phase 3 of 7 (detection).** Auth, roles, audit trail, design system,
+> ingestion for every v1 source, and a tested detection engine with 16 rules mapped to
+> MITRE ATT&CK v20.0 are in place. Correlation and triage land next. This README is
 > rewritten in full at the end (Phase 7).
+
+## Detections
+
+Rules are YAML in `backend/rules/` (Sigma-inspired: `field|modifier: value` conditions
+combined with all/any/not) with four logic types: **match**, **threshold** (count or
+distinct count per key in a window), **sequence** (A then B for the same key), and
+**first-seen**. Every rule has a test that fires and one that stays quiet, and every
+ATT&CK ID is checked against a pinned copy of the official matrix
+(`uv run python scripts/build_attack.py 20.0` to rebuild).
 
 ## Ingest
 

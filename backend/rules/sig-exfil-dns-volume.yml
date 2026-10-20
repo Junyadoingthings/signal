@@ -1,0 +1,21 @@
+id: sig-exfil-dns-volume
+title: High DNS query volume to one domain
+description: >
+  One host sends an unusual number of DNS queries for a single registered domain in a
+  short window. Catches tunnels that use short subdomains to dodge length checks.
+severity: medium
+attack:
+  tactic: exfiltration
+  techniques: [T1048.003, T1071.004]
+logic:
+  type: threshold
+  condition:
+    action: dns_query
+  group_by: [host, dns_domain]
+  window: 5m
+  threshold: 150
+false_positives:
+  - Busy services resolving their own back end without caching.
+  - Telemetry and update clients with aggressive retry loops.
+references:
+  - https://attack.mitre.org/techniques/T1071/004/

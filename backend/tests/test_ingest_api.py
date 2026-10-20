@@ -311,3 +311,22 @@ def test_tokens_admin_only(client: TestClient, analyst: User) -> None:
     r = client.post("/api/ingest/tokens", json={"name": "x"}, headers={"X-CSRF-Token": csrf})
     assert r.status_code == 403
     assert client.get("/api/ingest/tokens").status_code == 403
+
+
+def test_evtx_upload_resolves_group_member_sid(client: TestClient, db: Session) -> None:
+    """Local group adds log the member by SID only; the 4720 in the same file names it."""
+    h = admin_login(client)
+    b = upload(client, h, "evtx/new-user-security.evtx")
+    assert b["_status"] == 202
+    assert b["source_type"] == "evtx"
+    wait(client)
+    assert batch(client, b["id"])["parsed_count"] == 4
+    events = client.get("/api/events", params={"batch_id": b["id"]}).json()["items"]
+    admin_add = next(e for e in events if e["extra"].get("group") == "Administrators")
+    assert admin_add["user"] == "ieuser"
+    assert admin_add["extra"]["user_from_sid"] is True
+    # ...so detection links them: new account + added to Administrators, same user.
+    alerts = client.get("/api/alerts").json()["items"]
+    by_rule = {a["rule_id"]: a for a in alerts}
+    assert by_rule["sig-persist-new-account"]["user"] == "ieuser"
+    assert by_rule["sig-persist-admin-group"]["user"] == "ieuser"

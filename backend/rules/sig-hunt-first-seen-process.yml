@@ -1,0 +1,19 @@
+id: sig-hunt-first-seen-process
+title: First-seen process on host
+description: >
+  A process name runs on a host for the first time since SIGNAL started watching that
+  host. A discovery aid for hunting, not proof of compromise: new installers and
+  updates will appear here too. Quiet during the first day of history (learning).
+severity: low
+logic:
+  type: first_seen
+  condition:
+    action: process_created
+  entity: host
+  value: process_name
+  min_history: 1d
+tags: [hunting]
+false_positives:
+  - Software installs, updates and new admin tools.
+references:
+  - https://attack.mitre.org/techniques/T1059/

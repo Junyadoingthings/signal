@@ -1,0 +1,24 @@
+id: sig-auth-brute-force
+title: SSH / RDP brute force
+description: >
+  Many failed logons from one source IP in a short window. Covers sshd password and
+  key failures and Windows 4625 (including RDP, logon type 10).
+severity: medium
+attack:
+  tactic: credential-access
+  techniques: [T1110.001]
+logic:
+  type: threshold
+  condition:
+    all:
+      - action|in: [ssh_login, logon]
+      - outcome: failure
+  group_by: [src_ip]
+  window: 5m
+  threshold: 8
+false_positives:
+  - A user or script retrying with an expired password (look for one username, steady rate).
+  - Monitoring checks that log in with stale credentials.
+  - Vulnerability scanners you run yourself; allow-list their IPs.
+references:
+  - https://attack.mitre.org/techniques/T1110/001/

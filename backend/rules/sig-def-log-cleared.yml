@@ -1,0 +1,21 @@
+id: sig-def-log-cleared
+title: Windows Security log cleared
+description: >
+  Event 1102: the Security event log was cleared. Rare in normal operation and a
+  common step to remove evidence after an intrusion.
+severity: high
+attack:
+  tactic: defense-impairment
+  techniques: [T1685.005]
+logic:
+  type: match
+  condition:
+    action: log_cleared
+  suppress:
+    by: [host]
+    window: 1h
+false_positives:
+  - Lab machines and golden images being reset.
+  - An administrator clearing a full log on a misconfigured host (should be rare).
+references:
+  - https://attack.mitre.org/techniques/T1685/005/

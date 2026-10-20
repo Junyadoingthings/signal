@@ -1,0 +1,28 @@
+id: sig-c2-certutil-download
+title: certutil used to download or decode a file
+description: >
+  certutil.exe with -urlcache / -verifyctl and a URL (download), or -decode / -decodehex
+  (turning a base64 blob into a binary). A classic living-off-the-land technique to
+  bring tools onto a host.
+severity: high
+attack:
+  tactic: command-and-control
+  techniques: [T1105, T1140]
+logic:
+  type: match
+  condition:
+    all:
+      - process_name: certutil.exe
+      - any:
+          - all:
+              - process_cmdline|re: '(?i)[-/](urlcache|verifyctl)'
+              - process_cmdline|re: '(?i)(https?|ftp)://'
+          - process_cmdline|re: '(?i)[-/]decode(hex)?\b'
+  suppress:
+    by: [host, user]
+    window: 1h
+false_positives:
+  - Administrators checking certificate revocation lists (verifyctl against a CRL URL).
+references:
+  - https://attack.mitre.org/techniques/T1105/
+  - https://attack.mitre.org/techniques/T1140/

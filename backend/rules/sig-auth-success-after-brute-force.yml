@@ -1,0 +1,33 @@
+id: sig-auth-success-after-brute-force
+title: Successful logon after brute force
+description: >
+  A burst of failed logons from one source IP followed by a successful logon from the
+  same IP. The guessing probably worked: treat the account as compromised until proven
+  otherwise.
+severity: critical
+attack:
+  tactic: initial-access
+  techniques: [T1110, T1078]
+logic:
+  type: sequence
+  by: [src_ip]
+  within: 30m
+  steps:
+    - name: failed logons
+      min_count: 5
+      condition:
+        all:
+          - action|in: [ssh_login, logon]
+          - outcome: failure
+    - name: successful logon
+      condition:
+        all:
+          - action|in: [ssh_login, logon]
+          - outcome: success
+false_positives:
+  - >-
+    A user mistyping their password several times and then getting it right. Check the
+    usernames - failures across many accounts then one success is far more suspicious.
+references:
+  - https://attack.mitre.org/techniques/T1110/
+  - https://attack.mitre.org/techniques/T1078/

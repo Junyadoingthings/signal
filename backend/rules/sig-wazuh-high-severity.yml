@@ -1,0 +1,21 @@
+id: sig-wazuh-high-severity
+title: Wazuh high-severity alert
+description: >
+  Pass-through for Wazuh alerts at rule level 12 or above, so high-severity findings
+  from the Wazuh manager land in the SIGNAL queue. Severity follows the Wazuh level
+  (12+ is critical). The Wazuh rule's own MITRE mapping is kept in the event.
+severity: critical
+logic:
+  type: match
+  condition:
+    all:
+      - tags|contains: wazuh
+      - extra.wazuh.level|gte: 12
+  suppress:
+    by: [host, extra.wazuh.rule_id]
+    window: 1h
+tags: [severity_from_wazuh]
+false_positives:
+  - Whatever the underlying Wazuh rule documents; open the event to see its rule id.
+references:
+  - https://documentation.wazuh.com/current/user-manual/ruleset/rules/rules-classification.html

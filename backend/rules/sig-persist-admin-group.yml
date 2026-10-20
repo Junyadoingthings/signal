@@ -1,0 +1,23 @@
+id: sig-persist-admin-group
+title: User added to an administrative group
+description: >
+  An account was added to a privileged group: Administrators / Domain Admins (Windows
+  4732, 4728) or sudo / wheel / admin (usermod, gpasswd).
+severity: high
+attack:
+  tactic: persistence
+  techniques: [T1098.007]
+logic:
+  type: match
+  condition:
+    all:
+      - action: group_member_added
+      - tags|contains: privileged_group
+  suppress:
+    by: [host, user]
+    window: 1h
+false_positives:
+  - Approved privilege changes by IT (check change management).
+  - Build pipelines that temporarily grant admin rights.
+references:
+  - https://attack.mitre.org/techniques/T1098/007/

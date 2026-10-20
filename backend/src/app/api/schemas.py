@@ -235,3 +235,86 @@ class IngestSettingsOut(BaseModel):
     syslog_timezone: str
     syslog_year: int | None
     max_upload_bytes: int
+
+
+# ---------------------------------------------------------------- detection
+
+
+class TechniqueRef(BaseModel):
+    id: str
+    name: str | None
+    url: str | None
+
+
+class RuleOut(BaseModel):
+    id: str
+    title: str
+    severity: str
+    enabled: bool
+    logic_type: str
+    primary_tactic: str | None
+    techniques: list[TechniqueRef]
+    hit_count: int
+    last_fired_at: datetime | None
+    tags: list[str]
+
+
+class RuleDetail(RuleOut):
+    description: str
+    false_positives: list[str]
+    references: list[str]
+    yaml: str
+    updated_at: datetime
+
+
+class RuleUpdate(StrictModel):
+    enabled: bool
+
+
+class RetroHuntRequest(StrictModel):
+    start: datetime
+    end: datetime
+
+
+class RetroHuntResult(BaseModel):
+    rule_id: str
+    events_scanned: int
+    alerts: int
+
+
+class AlertOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    rule_id: str
+    severity: str
+    status: str
+    verdict: str | None
+    host: str | None
+    user: str | None
+    src_ip: str | None
+    group_key: str
+    event_count: int
+    first_event_at: datetime
+    last_event_at: datetime
+    created_at: datetime
+    match_context: dict[str, Any]
+    incident_id: int | None
+
+
+class AlertPage(BaseModel):
+    items: list[AlertOut]
+    next_before_id: int | None
+
+
+class TacticOut(BaseModel):
+    id: str
+    shortname: str
+    name: str
+    url: str
+    rule_count: int
+
+
+class AttackOut(BaseModel):
+    version: str
+    tactics: list[TacticOut]

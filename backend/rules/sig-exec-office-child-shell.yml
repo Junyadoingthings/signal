@@ -1,0 +1,26 @@
+id: sig-exec-office-child-shell
+title: Office application spawned a shell or script host
+description: >
+  Word, Excel, PowerPoint, Outlook or another Office app started cmd, PowerShell,
+  wscript, cscript, mshta, rundll32 or regsvr32. Typical of a malicious macro or
+  document exploit right after a phishing email is opened.
+severity: high
+attack:
+  tactic: execution
+  techniques: [T1204.002, T1059.001, T1059.003, T1059.005]
+logic:
+  type: match
+  condition:
+    all:
+      - parent_process|in:
+          [winword.exe, excel.exe, powerpnt.exe, outlook.exe, msaccess.exe, mspub.exe, onenote.exe, visio.exe]
+      - process_name|in:
+          [cmd.exe, powershell.exe, pwsh.exe, wscript.exe, cscript.exe, mshta.exe, rundll32.exe, regsvr32.exe, bitsadmin.exe, certutil.exe]
+  suppress:
+    by: [host, user]
+    window: 1h
+false_positives:
+  - Office add-ins or macros used legitimately by finance teams (validate the macro).
+references:
+  - https://attack.mitre.org/techniques/T1204/002/
+  - https://attack.mitre.org/techniques/T1059/

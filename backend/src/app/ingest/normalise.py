@@ -11,7 +11,9 @@ from typing import Any
 
 from app.ingest.types import NormalizedEvent
 
-_EMPTY = {"", "-", "n/a", "null", "none", "(null)"}
+# Placeholders Windows and syslog use for "no value". Not "none"/"null": "None" is a real
+# Windows group name (the default global group on workgroup machines).
+_EMPTY = {"", "-", "n/a", "(null)"}
 
 # Accounts that are noise for user-entity correlation.
 MACHINE_ACCOUNT_SUFFIX = "$"
@@ -112,6 +114,8 @@ def finalise(ev: NormalizedEvent) -> NormalizedEvent:
     if fqdn and "host_fqdn" not in ev.extra:
         ev.extra["host_fqdn"] = fqdn
 
+    if ev.action:
+        ev.action = ev.action.strip().lower()
     ev.src_ip = clean_ip(ev.src_ip)
     ev.dst_ip = clean_ip(ev.dst_ip)
     ev.timestamp = to_utc(ev.timestamp)

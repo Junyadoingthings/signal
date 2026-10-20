@@ -1,0 +1,31 @@
+id: sig-priv-off-hours
+title: Privileged activity outside business hours
+description: >
+  An account gets administrative privileges (Windows 4672) or runs sudo outside the
+  configured business hours. Business hours and timezone are set under Rules settings.
+  Built-in machine and service accounts are excluded.
+severity: medium
+attack:
+  tactic: privilege-escalation
+  techniques: [T1078]
+logic:
+  type: match
+  condition:
+    all:
+      - timestamp|off_hours: true
+      - any:
+          - all:
+              - action: special_privileges_assigned
+              - not:
+                  tags|contains: system_account
+          - all:
+              - action: sudo_command
+              - outcome: success
+  suppress:
+    by: [host, user]
+    window: 1h
+false_positives:
+  - On-call engineers and scheduled maintenance windows.
+  - Backup or patch jobs that run as an administrator at night.
+references:
+  - https://attack.mitre.org/techniques/T1078/

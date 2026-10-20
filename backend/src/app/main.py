@@ -9,11 +9,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session
 
 from app import __version__
-from app.api import audit, auth, events, ingest, system, users
+from app.api import audit, auth, events, ingest, rules, system, users
 from app.core.config import Settings, get_settings
 from app.core.errors import install_error_handlers
 from app.core.middleware import BodySizeLimitMiddleware, SecurityHeadersMiddleware
 from app.core.ratelimit import limiter
+from app.detection.engine import Engine
+from app.detection.loader import load_rules, sync_rules
+from app.ingest import pipeline
 from app.ingest.service import (
     IngestWorker,
     clear_spool,
@@ -37,6 +40,13 @@ def create_app(settings: Settings | None = None, *, run_migrations: bool = True)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 
     worker = IngestWorker()
+    # Rule files are validated at startup: a broken rule stops the app instead of
+    # silently not detecting anything.
+    rule_files = load_rules()
+    engine = Engine(spec for spec, _ in rule_files)
+
+    def detect(db: Session, event_ids: list[int]) -> None:
+        engine.on_ingest(db, event_ids)
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
@@ -46,7 +56,9 @@ def create_app(settings: Settings | None = None, *, run_migrations: bool = True)
             ensure_admin(db, settings)
             SqlSessionRepository(db).purge_expired()
             fail_interrupted_batches(db)
+            sync_rules(db, rule_files)
         clear_spool(spool_dir(settings))
+        pipeline.post_ingest_hooks.append(detect)
         worker.start()
         if not settings.cookie_secure:
             log.warning("SIGNAL_COOKIE_SECURE is off: session cookies will be sent over plain HTTP")
@@ -54,6 +66,7 @@ def create_app(settings: Settings | None = None, *, run_migrations: bool = True)
             yield
         finally:
             worker.stop()
+            pipeline.post_ingest_hooks.remove(detect)
 
     app = FastAPI(
         title="SIGNAL API",
@@ -67,6 +80,7 @@ def create_app(settings: Settings | None = None, *, run_migrations: bool = True)
     app.state.limiter = limiter
     app.state.settings = settings
     app.state.ingest_worker = worker
+    app.state.engine = engine
 
     def body_limit(path: str) -> int:
         if path == UPLOAD_PATH:
@@ -93,6 +107,14 @@ def create_app(settings: Settings | None = None, *, run_migrations: bool = True)
         SecurityHeadersMiddleware, hsts=settings.cookie_secure and settings.env == "prod"
     )
 
-    for r in (system.router, auth.router, users.router, audit.router, ingest.router, events.router):
+    for r in (
+        system.router,
+        auth.router,
+        users.router,
+        audit.router,
+        ingest.router,
+        events.router,
+        rules.router,
+    ):
         app.include_router(r)
     return app

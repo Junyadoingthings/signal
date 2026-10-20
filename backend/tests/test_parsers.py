@@ -348,3 +348,50 @@ def test_dedup_keeps_repeats_within_a_batch_but_not_across_uploads() -> None:
     assert len(set(k1)) == 3  # genuine repeats are distinct events
     assert k1 == k2  # same file again → same keys → deduplicated
     assert first.key("web_access", line) != k1[0]
+
+
+# ----------------------------------------------------------------- real EVTX files
+
+EVTX = FIX / "evtx"
+
+
+def test_real_evtx_security_sample() -> None:
+    results = list(windows.parse_evtx(EVTX / "Security_short_selected.evtx"))
+    assert len(results) == 7
+    assert all(isinstance(r, Parsed) for r in results)
+    events = [r.event for r in results if isinstance(r, Parsed)]
+    [fail] = [e for e in events if e.event_code == "4625"]
+    assert (fail.action, fail.outcome, fail.user) == ("logon", Outcome.failure, "administrator")
+    assert fail.src_ip == "23.94.153.202"
+    assert fail.timestamp.tzinfo is not None
+
+
+def test_real_evtx_account_management() -> None:
+    events = [
+        r.event
+        for r in windows.parse_evtx(EVTX / "new-user-security.evtx")
+        if isinstance(r, Parsed)
+    ]
+    codes = sorted(e.event_code or "" for e in events)
+    assert codes == ["4720", "4728", "4732", "4732"]
+    created = next(e for e in events if e.event_code == "4720")
+    assert created.user == "ieuser"
+    assert created.extra["target_sid"].endswith("-1000")
+    groups = {e.extra["group"] for e in events if e.action == "group_member_added"}
+    assert groups == {"None", "Users", "Administrators"}  # "None" is a real Windows group
+    admins = next(e for e in events if e.extra.get("group") == "Administrators")
+    assert "privileged_group" in admins.tags
+    assert admins.extra["member_sid"] == created.extra["target_sid"]
+
+
+def test_real_evtx_sysmon_sample() -> None:
+    events = [r.event for r in windows.parse_evtx(EVTX / "sysmon.evtx") if isinstance(r, Parsed)]
+    assert len(events) == 41
+    procs = [e for e in events if e.action == "process_created"]
+    assert len(procs) == 31
+    assert all(e.source_type == "sysmon" and e.process_name for e in procs)
+    assert any(e.parent_process for e in procs)
+
+
+def test_evtx_upload_sniffs_by_magic() -> None:
+    assert sniff((EVTX / "sysmon.evtx").read_bytes()[:65536]) == "evtx"

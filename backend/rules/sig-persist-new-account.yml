@@ -1,0 +1,21 @@
+id: sig-persist-new-account
+title: New local account created
+description: >
+  A user account was created (Linux useradd, Windows 4720). Attackers create accounts
+  to keep access after the initial foothold is cleaned up.
+severity: medium
+attack:
+  tactic: persistence
+  techniques: [T1136.001]
+logic:
+  type: match
+  condition:
+    action: user_created
+  suppress:
+    by: [host, user]
+    window: 1h
+false_positives:
+  - Helpdesk or IT onboarding new staff (check for a matching ticket).
+  - Software installers that create service accounts.
+references:
+  - https://attack.mitre.org/techniques/T1136/001/

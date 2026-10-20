@@ -288,6 +288,10 @@ class Alert(SQLModel, table=True):
     host: str | None = Field(default=None, max_length=255, index=True)
     user: str | None = Field(default=None, max_length=255, index=True)
     src_ip: str | None = Field(default=None, max_length=45, index=True)
+    # Rule-specific grouping key (e.g. the source IP of a brute force) used to merge
+    # repeat hits into one alert instead of opening a new one each time.
+    group_key: str = Field(default="", max_length=512, index=True)
+    event_count: int = 0
     first_event_at: datetime = ts_field(index=True)
     last_event_at: datetime = ts_field()
     match_context: dict[str, Any] = json_field({})
@@ -354,3 +358,15 @@ class IngestToken(SQLModel, table=True):
     created_at: datetime = ts_field()
     last_used_at: datetime | None = ts_field(nullable=True, default_now=False)
     revoked_at: datetime | None = ts_field(nullable=True, default_now=False)
+
+
+class AccountSid(SQLModel, table=True):
+    """Windows SID → account name, learned from events that carry both (4720, 4624,
+    4672). Used to name the member in group-change events, which often log only a SID."""
+
+    __tablename__ = "account_sids"
+
+    sid: str = Field(primary_key=True, max_length=184)
+    name: str = Field(max_length=255)
+    domain: str | None = Field(default=None, max_length=255)
+    last_seen: datetime = ts_field()
