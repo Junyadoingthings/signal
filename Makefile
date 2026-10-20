@@ -25,7 +25,7 @@ test-frontend:
 	cd frontend && npm test
 
 lint: ## ruff + mypy + eslint + prettier + tsc
-	cd backend && uv run ruff check . && uv run ruff format --check . && uv run mypy src tests
+	cd backend && uv run ruff check . ../tools && uv run ruff format --check . ../tools && uv run mypy src tests ../tools/signal_tail.py
 	cd frontend && npm run lint && npm run format:check && npm run typecheck
 
 fmt: ## Auto-format everything
