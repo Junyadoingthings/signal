@@ -92,3 +92,16 @@ export const IngestIcon = (p: SVGProps<SVGSVGElement>) => (
     <path d="M2 4.5h12M2 8h7M2 11.5h4.5M11.5 9v5M9.25 11.75 11.5 14l2.25-2.25" />
   </Icon>
 );
+
+export const RulesIcon = (p: SVGProps<SVGSVGElement>) => (
+  <Icon {...p}>
+    <path d="M8 1.75 13.5 4v4c0 3-2.3 5.3-5.5 6.25C4.8 13.3 2.5 11 2.5 8V4z" />
+    <path d="m5.75 8 1.6 1.6 3-3.1" />
+  </Icon>
+);
+
+export const ExternalIcon = (p: SVGProps<SVGSVGElement>) => (
+  <Icon {...p}>
+    <path d="M9.5 2.5h4v4M13.5 2.5 7.5 8.5M11.5 9.5v3.25c0 .4-.35.75-.75.75h-7.5a.75.75 0 0 1-.75-.75v-7.5c0-.4.35-.75.75-.75H6.5" />
+  </Icon>
+);

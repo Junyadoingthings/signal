@@ -7,6 +7,8 @@ import { LoginPage } from "@/features/auth/LoginPage";
 import { BatchPage } from "@/features/ingest/BatchPage";
 import { IngestPage } from "@/features/ingest/IngestPage";
 import { OverviewPage } from "@/features/overview/OverviewPage";
+import { RulePage } from "@/features/rules/RulePage";
+import { RulesPage } from "@/features/rules/RulesPage";
 import { ApiError } from "@/lib/api";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { ThemeProvider } from "@/lib/theme";
@@ -48,6 +50,8 @@ export const routes = [
           { index: true, element: <OverviewPage /> },
           { path: "ingest", element: <IngestPage /> },
           { path: "ingest/batches/:id", element: <BatchPage /> },
+          { path: "rules", element: <RulesPage /> },
+          { path: "rules/:id", element: <RulePage /> },
           {
             path: "admin/users",
             element: (

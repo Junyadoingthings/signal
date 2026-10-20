@@ -126,3 +126,75 @@ export interface IngestToken {
 export interface IngestTokenCreated extends IngestToken {
   token: string;
 }
+
+export interface TechniqueRef {
+  id: string;
+  name: string | null;
+  url: string | null;
+}
+
+export interface RuleSummary {
+  id: string;
+  title: string;
+  severity: Severity;
+  enabled: boolean;
+  logic_type: "match" | "threshold" | "sequence" | "first_seen" | "unknown";
+  primary_tactic: string | null;
+  techniques: TechniqueRef[];
+  hit_count: number;
+  last_fired_at: string | null;
+  tags: string[];
+}
+
+export interface RuleDetail extends RuleSummary {
+  description: string;
+  false_positives: string[];
+  references: string[];
+  yaml: string;
+  updated_at: string;
+}
+
+export interface MatchHit {
+  field: string;
+  op: string;
+  expected: unknown;
+  actual: unknown;
+}
+
+export interface Alert {
+  id: number;
+  rule_id: string;
+  severity: Severity;
+  status: "new" | "investigating" | "closed";
+  verdict: string | null;
+  host: string | null;
+  user: string | null;
+  src_ip: string | null;
+  group_key: string;
+  event_count: number;
+  first_event_at: string;
+  last_event_at: string;
+  created_at: string;
+  match_context: { type?: string; matched?: MatchHit[] } & Record<string, unknown>;
+  incident_id: number | null;
+}
+
+export interface AttackTactic {
+  id: string;
+  shortname: string;
+  name: string;
+  url: string;
+  rule_count: number;
+}
+
+export interface AttackMatrix {
+  version: string;
+  tactics: AttackTactic[];
+}
+
+export interface DetectionSettings {
+  business_timezone: string;
+  business_start: string;
+  business_end: string;
+  business_days: number[];
+}

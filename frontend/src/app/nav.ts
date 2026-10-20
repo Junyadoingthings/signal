@@ -1,5 +1,5 @@
 import type { ComponentType, SVGProps } from "react";
-import { AuditIcon, IngestIcon, OverviewIcon, UsersIcon } from "@/components/icons";
+import { AuditIcon, IngestIcon, OverviewIcon, RulesIcon, UsersIcon } from "@/components/icons";
 import type { Role } from "@/lib/types";
 
 export interface NavItem {
@@ -19,6 +19,12 @@ export const NAV: NavItem[] = [
     label: "Ingest",
     icon: IngestIcon,
     keywords: ["upload", "logs", "import", "evtx", "wazuh", "tail", "unparsed", "batches"],
+  },
+  {
+    to: "/rules",
+    label: "Rules",
+    icon: RulesIcon,
+    keywords: ["detections", "att&ck", "mitre", "sigma", "retro-hunt", "coverage"],
   },
   {
     to: "/admin/users",
