@@ -1,0 +1,40 @@
+# One command: docker compose up  →  http://localhost:8080
+services:
+  api:
+    build: ./backend
+    env_file: .env
+    environment:
+      SIGNAL_ENV: prod
+      SIGNAL_DATABASE_URL: sqlite:////data/signal.db
+      SIGNAL_FRONTEND_ORIGIN: http://localhost:8080
+      SIGNAL_COOKIE_SECURE: ${SIGNAL_COOKIE_SECURE:-true}
+    volumes:
+      - signal-data:/data
+    # Not published: only reachable through the web container.
+    expose:
+      - "8000"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+
+  web:
+    build: ./frontend
+    ports:
+      - "8080:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /var/run
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  signal-data:
