@@ -1,0 +1,16 @@
+Oct 20 03:14:07 web01 sshd[2211]: Invalid user oracle from 203.0.113.50 port 50122
+Oct 20 03:14:07 web01 sshd[2211]: Failed password for invalid user oracle from 203.0.113.50 port 50122 ssh2
+Oct 20 03:14:09 web01 sshd[2213]: Failed password for root from 203.0.113.50 port 50130 ssh2
+Oct 20 03:14:09 web01 sshd[2213]: Failed password for root from 203.0.113.50 port 50130 ssh2
+Oct 20 03:15:41 web01 sshd[2290]: Accepted password for deploy from 203.0.113.50 port 50310 ssh2
+Oct 20 03:15:41 web01 sshd[2290]: pam_unix(sshd:session): session opened for user deploy(uid=1001) by (uid=0)
+Oct 20 03:16:02 web01 sudo:   deploy : TTY=pts/0 ; PWD=/home/deploy ; USER=root ; COMMAND=/usr/sbin/useradd -m -s /bin/bash svc-backup
+Oct 20 03:16:02 web01 useradd[2301]: new group: name=svc-backup, GID=1002
+Oct 20 03:16:02 web01 useradd[2301]: new user: name=svc-backup, UID=1002, GID=1002, home=/home/svc-backup, shell=/bin/bash, from=/dev/pts/0
+Oct 20 03:16:30 web01 usermod[2310]: add 'svc-backup' to group 'sudo'
+Oct 20 03:16:30 web01 usermod[2310]: add 'svc-backup' to shadow group 'sudo'
+Oct 20 03:17:00 web01 sudo:    alice : 3 incorrect password attempts ; TTY=pts/1 ; PWD=/home/alice ; USER=root ; COMMAND=/bin/cat /etc/shadow
+Oct 20 03:18:00 web01 su: FAILED SU (to root) alice on pts/1
+Oct 20 03:20:00 web01 CRON[2400]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Oct 20 03:21:00 web01 systemd-logind[512]: New session 7 of user deploy.
+this line is not syslog at all

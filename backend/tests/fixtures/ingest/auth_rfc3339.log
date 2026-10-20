@@ -1,0 +1,2 @@
+2026-10-20T09:00:01.123456+02:00 db01 sshd[901]: Accepted publickey for alice from 10.0.0.5 port 51515 ssh2: ED25519 SHA256:abc
+2026-10-20T09:00:05+02:00 db01 gpasswd[911]: user bob added by root to group wheel

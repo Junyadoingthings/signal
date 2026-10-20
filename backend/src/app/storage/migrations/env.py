@@ -1,7 +1,7 @@
 from alembic import context
 from sqlmodel import SQLModel
 
-import app.storage.models  # noqa: F401  (registers tables on the metadata)
+import app.storage.models  # registers tables on the metadata
 from app.storage.db import make_engine
 
 config = context.config

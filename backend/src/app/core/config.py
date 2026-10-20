@@ -17,6 +17,7 @@ class Settings(BaseSettings):
 
     env: Literal["dev", "test", "prod"] = "dev"
     database_url: str = "sqlite:///./data/signal.db"
+    data_dir: str = "./data"  # upload spool lives under here
 
     # First-run admin. Only used when the users table is empty; never has a default.
     admin_email: str | None = None
@@ -33,6 +34,8 @@ class Settings(BaseSettings):
     frontend_origin: str = "http://localhost:5173"
     max_request_bytes: int = 1 * 1024 * 1024
     max_upload_bytes: int = 50 * 1024 * 1024
+    max_live_batch_bytes: int = 10 * 1024 * 1024
+    max_live_records: int = 5000
 
     # Rate limits (slowapi syntax)
     login_rate_limit: str = "5/minute"

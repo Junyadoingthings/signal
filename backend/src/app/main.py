@@ -9,11 +9,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session
 
 from app import __version__
-from app.api import audit, auth, system, users
+from app.api import audit, auth, events, ingest, system, users
 from app.core.config import Settings, get_settings
 from app.core.errors import install_error_handlers
 from app.core.middleware import BodySizeLimitMiddleware, SecurityHeadersMiddleware
 from app.core.ratelimit import limiter
+from app.ingest.service import (
+    IngestWorker,
+    clear_spool,
+    fail_interrupted_batches,
+    spool_dir,
+)
 from app.services.bootstrap import ensure_admin
 from app.storage.db import get_engine
 from app.storage.migrate import upgrade_to_head
@@ -21,12 +27,16 @@ from app.storage.repositories import SqlSessionRepository
 
 log = logging.getLogger("signal")
 
-UPLOAD_PATH_PREFIX = "/api/ingest/upload"
+UPLOAD_PATH = "/api/ingest/upload"
+LIVE_PATH = "/api/ingest/events"
+MULTIPART_OVERHEAD = 1024 * 1024
 
 
 def create_app(settings: Settings | None = None, *, run_migrations: bool = True) -> FastAPI:
     settings = settings or get_settings()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+
+    worker = IngestWorker()
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
@@ -35,9 +45,15 @@ def create_app(settings: Settings | None = None, *, run_migrations: bool = True)
         with Session(get_engine()) as db:
             ensure_admin(db, settings)
             SqlSessionRepository(db).purge_expired()
+            fail_interrupted_batches(db)
+        clear_spool(spool_dir(settings))
+        worker.start()
         if not settings.cookie_secure:
             log.warning("SIGNAL_COOKIE_SECURE is off: session cookies will be sent over plain HTTP")
-        yield
+        try:
+            yield
+        finally:
+            worker.stop()
 
     app = FastAPI(
         title="SIGNAL API",
@@ -50,6 +66,15 @@ def create_app(settings: Settings | None = None, *, run_migrations: bool = True)
     )
     app.state.limiter = limiter
     app.state.settings = settings
+    app.state.ingest_worker = worker
+
+    def body_limit(path: str) -> int:
+        if path == UPLOAD_PATH:
+            return settings.max_upload_bytes + MULTIPART_OVERHEAD
+        if path == LIVE_PATH:
+            return settings.max_live_batch_bytes
+        return settings.max_request_bytes
+
     install_error_handlers(app)
 
     # Starlette runs the last-added middleware first.
@@ -62,16 +87,12 @@ def create_app(settings: Settings | None = None, *, run_migrations: bool = True)
     )
     app.add_middleware(
         BodySizeLimitMiddleware,
-        limit_for=lambda path: (
-            settings.max_upload_bytes
-            if path.startswith(UPLOAD_PATH_PREFIX)
-            else settings.max_request_bytes
-        ),
+        limit_for=body_limit,
     )
     app.add_middleware(
         SecurityHeadersMiddleware, hsts=settings.cookie_secure and settings.env == "prod"
     )
 
-    for r in (system.router, auth.router, users.router, audit.router):
+    for r in (system.router, auth.router, users.router, audit.router, ingest.router, events.router):
         app.include_router(r)
     return app

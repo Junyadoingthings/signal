@@ -133,10 +133,12 @@ class IngestBatch(SQLModel, table=True):
     __tablename__ = "ingest_batches"
 
     id: int | None = Field(default=None, primary_key=True)
-    source_type: str = Field(index=True, max_length=32)
-    filename: str | None = Field(default=None, max_length=255)
+    source_type: str = Field(index=True, max_length=32)  # the parsed format
+    kind: str = Field(default="upload", max_length=8)  # upload | live
+    filename: str | None = Field(default=None, max_length=255)  # or live stream name
+    default_host: str | None = Field(default=None, max_length=255)
     size_bytes: int = 0
-    status: str = Field(default="pending", max_length=16)  # pending|running|done|failed
+    status: str = Field(default="pending", max_length=16)  # pending|running|done|failed|live
     parsed_count: int = 0
     unparsed_count: int = 0
     duplicate_count: int = 0
@@ -191,6 +193,7 @@ class UnparsedEvent(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     batch_id: int | None = Field(default=None, foreign_key="ingest_batches.id", index=True)
     line_no: int | None = None
+    dedup_hash: str | None = Field(default=None, unique=True, max_length=64)
     raw: str = Field(sa_column=Column(Text, nullable=False))
     reason: str = Field(max_length=512)
     created_at: datetime = ts_field(index=True)
@@ -335,3 +338,19 @@ class Setting(SQLModel, table=True):
     key: str = Field(primary_key=True, max_length=64)
     value: Any = Field(sa_column=Column(JSON, nullable=False))
     updated_at: datetime = ts_field()
+
+
+class IngestToken(SQLModel, table=True):
+    """Bearer token for machine ingest (the tail CLI, lab forwarders). Stored hashed;
+    scoped to POST /api/ingest/events only."""
+
+    __tablename__ = "ingest_tokens"
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(max_length=80)
+    token_hash: str = Field(unique=True, max_length=64)
+    prefix: str = Field(max_length=12)  # shown in the UI to tell tokens apart
+    created_by: int | None = Field(default=None, foreign_key="users.id")
+    created_at: datetime = ts_field()
+    last_used_at: datetime | None = ts_field(nullable=True, default_now=False)
+    revoked_at: datetime | None = ts_field(nullable=True, default_now=False)

@@ -1,0 +1,4 @@
+{"ts": "2026-10-20T11:00:00Z", "device": {"name": "fw01"}, "src": "10.1.1.1", "dst": "8.8.8.8", "dport": 53, "result": "allowed", "who": "CORP\\Carol"}
+{"ts": 1792494000, "device": {"name": "fw01"}, "src": "10.1.1.2", "result": "denied"}
+{"device": {"name": "fw01"}}
+{not json

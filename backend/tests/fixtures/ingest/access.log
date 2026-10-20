@@ -1,0 +1,6 @@
+198.51.100.7 - - [20/Oct/2026:10:00:00 +0000] "GET /index.html HTTP/1.1" 200 5120 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+198.51.100.7 - - [20/Oct/2026:10:00:01 +0000] "GET /products.php?id=1%27%20OR%201=1-- HTTP/1.1" 500 312 "-" "sqlmap/1.8.4#stable (https://sqlmap.org)"
+198.51.100.9 - admin [20/Oct/2026:10:00:02 +0200] "GET /../../etc/passwd HTTP/1.1" 404 0 "http://ref.example/" "Mozilla/5.0 \"quoted\" agent"
+198.51.100.10 - - [20/Oct/2026:10:00:03 +0000] "\x16\x03\x01\x02\x00\x01" 400 157 "-" "-"
+192.0.2.1 - - [20/Oct/2026:10:00:04 +0000] "HEAD / HTTP/1.0" 200 - 
+garbage line
