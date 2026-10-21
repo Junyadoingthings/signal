@@ -121,3 +121,10 @@ export const IncidentsIcon = (p: SVGProps<SVGSVGElement>) => (
     <path d="M4.4 10.3 7.1 6.2M9.2 5.9l2.4 2.5" />
   </Icon>
 );
+
+export const HuntIcon = (p: SVGProps<SVGSVGElement>) => (
+  <Icon {...p}>
+    <circle cx="6.75" cy="6.75" r="4.25" />
+    <path d="m10 10 4 4M5 6.75h3.5M6.75 5v3.5" />
+  </Icon>
+);

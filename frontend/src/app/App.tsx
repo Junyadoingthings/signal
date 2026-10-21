@@ -7,6 +7,8 @@ import { LoginPage } from "@/features/auth/LoginPage";
 import { BatchPage } from "@/features/ingest/BatchPage";
 import { IngestPage } from "@/features/ingest/IngestPage";
 import { AlertsPage } from "@/features/alerts/AlertsPage";
+import { EntityPage } from "@/features/entities/EntityPage";
+import { HuntPage } from "@/features/hunt/HuntPage";
 import { IncidentPage } from "@/features/incidents/IncidentPage";
 import { IncidentsPage } from "@/features/incidents/IncidentsPage";
 import { OverviewPage } from "@/features/overview/OverviewPage";
@@ -59,6 +61,8 @@ export const routes = [
           { path: "alerts", element: <AlertsPage />, handle: { fullBleed: true } },
           { path: "incidents", element: <IncidentsPage /> },
           { path: "incidents/:id", element: <IncidentPage /> },
+          { path: "hunt", element: <HuntPage /> },
+          { path: "entities/:type", element: <EntityPage /> },
           { path: "ingest", element: <IngestPage /> },
           { path: "ingest/batches/:id", element: <BatchPage /> },
           { path: "rules", element: <RulesPage /> },

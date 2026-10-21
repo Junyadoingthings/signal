@@ -2,6 +2,7 @@ import type { ComponentType, SVGProps } from "react";
 import {
   AlertsIcon,
   AuditIcon,
+  HuntIcon,
   IncidentsIcon,
   IngestIcon,
   OverviewIcon,
@@ -33,6 +34,12 @@ export const NAV: NavItem[] = [
     label: "Incidents",
     icon: IncidentsIcon,
     keywords: ["cases", "storyline", "correlated"],
+  },
+  {
+    to: "/hunt",
+    label: "Hunt",
+    icon: HuntIcon,
+    keywords: ["search", "query", "events", "investigate", "logs", "timeline"],
   },
   {
     to: "/ingest",

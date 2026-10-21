@@ -12,6 +12,8 @@ export const SHORTCUTS: { keys: string[]; label: string }[] = [
   { keys: ["e"], label: "Alerts: triage (assign / close)" },
   { keys: ["/"], label: "Alerts: search" },
   { keys: ["1–5"], label: "Triage menu: pick an action" },
+  { keys: ["/"], label: "Hunt: focus the query bar" },
+  { keys: ["← →", "+", "−"], label: "Time scrubber: pan / zoom (focus it first)" },
 ];
 
 export function ShortcutsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {

@@ -134,6 +134,24 @@ export function CommandPalette({ open, onOpenChange, onShowShortcuts }: Props) {
             <span className="flex-1">Log out</span>
           </Command.Item>
         </Command.Group>
+        {search.trim() && !num ? (
+          <Command.Group heading="Hunt" className={groupCls}>
+            <Command.Item
+              value={`hunt for ${search}`}
+              keywords={[search]}
+              forceMount
+              onSelect={run(() => {
+                void navigate(`/hunt?q=${encodeURIComponent(search.trim())}`);
+              })}
+              className={itemCls}
+            >
+              <span className="flex-1 truncate">
+                Hunt for <span className="font-mono text-fg">{search.trim()}</span>
+              </span>
+              <ArrowIcon className="size-3.5 opacity-50" />
+            </Command.Item>
+          </Command.Group>
+        ) : null}
       </Command.List>
     </Command.Dialog>
   );

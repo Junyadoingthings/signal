@@ -1,6 +1,6 @@
 /*
  * SIGNAL design tokens. Every colour, size and duration in the UI comes from here.
- * Chrome is near-monochrome; --accent is reserved for "this needs your attention".
+ * Chrome is near-monochrome; --accent (cyan) marks "this needs your attention".
  */
 
 :root {
@@ -67,10 +67,10 @@
   --fg-faint: #636a73; /* decorative / large text only */
   --fg-inverse: #0b0c0e;
 
-  --accent: #ff6a1a;
-  --accent-fg: #ff7a33; /* accent used as text: 6.4:1 on --bg */
-  --accent-soft: rgb(255 106 26 / 0.12);
-  --accent-ring: rgb(255 106 26 / 0.55);
+  --accent: #22d3ee;
+  --accent-fg: #4fdcf2; /* accent as text: 11:1 on --bg */
+  --accent-soft: rgb(34 211 238 / 0.1);
+  --accent-ring: rgb(34 211 238 / 0.6);
 
   /* Severity: luminance + saturation climb inside one warm hue family. Always paired
      with a glyph and a label in the UI, never colour alone. */
@@ -106,10 +106,10 @@
     --fg-muted: #625d55;
     --fg-faint: #9b958b;
     --fg-inverse: #fbfaf7;
-    --accent: #f05a0a;
-    --accent-fg: #b8440a;
-    --accent-soft: rgb(240 90 10 / 0.1);
-    --accent-ring: rgb(240 90 10 / 0.5);
+    --accent: #0891b2;
+    --accent-fg: #0e7490;
+    --accent-soft: rgb(8 145 178 / 0.1);
+    --accent-ring: rgb(8 145 178 / 0.5);
     --sev-low: #857e70;
     --sev-medium: #a67c12;
     --sev-high: #d9600f;
@@ -138,10 +138,10 @@
   --fg-muted: #625d55;
   --fg-faint: #9b958b;
   --fg-inverse: #fbfaf7;
-  --accent: #f05a0a;
-  --accent-fg: #b8440a;
-  --accent-soft: rgb(240 90 10 / 0.1);
-  --accent-ring: rgb(240 90 10 / 0.5);
+  --accent: #0891b2;
+  --accent-fg: #0e7490;
+  --accent-soft: rgb(8 145 178 / 0.1);
+  --accent-ring: rgb(8 145 178 / 0.5);
   --sev-low: #857e70;
   --sev-medium: #a67c12;
   --sev-high: #d9600f;

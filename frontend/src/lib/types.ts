@@ -299,3 +299,66 @@ export interface TriagePatch {
   assignee_id?: number;
   unassign?: boolean;
 }
+
+export interface HuntResult {
+  items: EventRecord[];
+  total: number;
+  offset: number;
+  limit: number;
+}
+
+export interface Bucket {
+  start: string;
+  count: number;
+  failures: number;
+}
+
+export interface Histogram {
+  start: string;
+  end: string;
+  bucket_seconds: number;
+  buckets: Bucket[];
+  total: number;
+}
+
+export interface SavedSearch {
+  id: number;
+  owner_id: number;
+  name: string;
+  query: string;
+  time_range: string;
+  created_at: string;
+}
+
+export type EntityType = "host" | "user" | "ip" | "process" | "domain";
+
+export interface GraphNode {
+  id: string;
+  type: EntityType;
+  value: string;
+  event_count: number;
+  hop: number;
+}
+
+export interface GraphEdge {
+  source: string;
+  target: string;
+  relation: string;
+  count: number;
+}
+
+export interface EntityDetail {
+  entity: {
+    type: EntityType;
+    value: string;
+    first_seen: string;
+    last_seen: string;
+    event_count: number;
+  };
+  actions: Record<string, number>;
+  alerts: AlertRow[];
+  incident_ids: number[];
+  events: EventRecord[];
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+}

@@ -8,6 +8,7 @@ import { RawLog } from "@/components/RawLog";
 import { Button, Kbd, Select, SeverityBadge } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { entityPath } from "@/lib/entity";
 import { formatNumber, formatTimestamp } from "@/lib/format";
 import type { AlertDetail, AlertStatus, EventRecord, MatchHit, Verdict } from "@/lib/types";
 import { STATUS_LABEL, useDirectory, useTriage, VERDICT_LABEL } from "./triage";
@@ -290,19 +291,23 @@ function TriageBar({ detail }: { detail: AlertDetail }) {
 
 function Entities({ detail }: { detail: AlertDetail }) {
   const a = detail.alert;
-  const items: [string, string | null][] = [
-    ["host", a.host],
-    ["user", a.user],
-    ["source ip", a.src_ip],
+  const items: [string, string | null, "host" | "user" | "ip"][] = [
+    ["host", a.host, "host"],
+    ["user", a.user, "user"],
+    ["source ip", a.src_ip, "ip"],
   ];
   return (
     <dl className="grid grid-cols-[6rem_1fr] gap-x-3 gap-y-1.5 text-sm">
       {items
         .filter(([, v]) => v)
-        .map(([k, v]) => (
+        .map(([k, v, t]) => (
           <div key={k} className="contents">
             <dt className="text-xs text-fg-faint">{k}</dt>
-            <dd className="font-mono text-xs">{v}</dd>
+            <dd className="font-mono text-xs">
+              <Link to={entityPath(t, v ?? "")} className="hover:text-accent-fg hover:underline">
+                {v}
+              </Link>
+            </dd>
           </div>
         ))}
       <dt className="text-xs text-fg-faint">window</dt>

@@ -7,6 +7,7 @@ import { Button, Panel, Select, SeverityBadge } from "@/components/ui";
 import { Inspector } from "@/features/alerts/Inspector";
 import { STATUS_LABEL, useDirectory, VERDICT_LABEL } from "@/features/alerts/triage";
 import { api, ApiError } from "@/lib/api";
+import { entityPath } from "@/lib/entity";
 import { formatNumber, formatRelative, formatTimestamp } from "@/lib/format";
 import { useHotkey } from "@/lib/hotkeys";
 import type { AlertStatus, AttackMatrix, IncidentDetail, TriagePatch, Verdict } from "@/lib/types";
@@ -158,7 +159,19 @@ export function IncidentPage() {
                   return vals.length ? (
                     <div key={k} className="contents">
                       <dt className="text-fg-faint">{k === "src_ip" ? "source ip" : k}</dt>
-                      <dd className="font-mono [overflow-wrap:anywhere]">{vals.join(", ")}</dd>
+                      <dd className="font-mono [overflow-wrap:anywhere]">
+                        {vals.map((v, i) => (
+                          <span key={v}>
+                            {i > 0 ? ", " : ""}
+                            <Link
+                              to={entityPath(k === "src_ip" ? "ip" : k, v)}
+                              className="hover:text-accent-fg hover:underline"
+                            >
+                              {v}
+                            </Link>
+                          </span>
+                        ))}
+                      </dd>
                     </div>
                   ) : null;
                 })}
