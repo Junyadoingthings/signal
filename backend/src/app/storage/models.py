@@ -268,6 +268,8 @@ class Incident(SQLModel, table=True):
     verdict: Verdict | None = None
     assignee_id: int | None = Field(default=None, foreign_key="users.id")
     tactics: list[str] = json_field([])
+    entities: dict[str, Any] = json_field({})  # {"host": [...], "user": [...], "src_ip": [...]}
+    alert_count: int = 0
     first_event_at: datetime = ts_field(index=True)
     last_event_at: datetime = ts_field()
     created_at: datetime = ts_field(index=True)

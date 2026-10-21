@@ -1,15 +1,12 @@
 from datetime import timedelta
-from typing import Annotated
 
 import yaml
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Request
 from sqlmodel import col, select
 
 from app import attack
 from app.api.deps import DB, AdminUser, CurrentUser, client_ip
 from app.api.schemas import (
-    AlertOut,
-    AlertPage,
     AttackOut,
     RetroHuntRequest,
     RetroHuntResult,
@@ -24,7 +21,7 @@ from app.core.ratelimit import limiter
 from app.detection.engine import Engine
 from app.services import audit
 from app.services import settings as settings_service
-from app.storage.models import Alert, Rule
+from app.storage.models import Rule
 
 router = APIRouter(prefix="/api", tags=["detection"])
 
@@ -178,21 +175,3 @@ def attack_matrix(_: CurrentUser, db: DB) -> AttackOut:
             for t in attack.tactics()
         ],
     )
-
-
-@router.get("/alerts", response_model=AlertPage)
-def list_alerts(
-    _: CurrentUser,
-    db: DB,
-    rule_id: Annotated[str | None, Query(max_length=64)] = None,
-    limit: Annotated[int, Query(ge=1, le=200)] = 50,
-    before_id: Annotated[int | None, Query(ge=1)] = None,
-) -> AlertPage:
-    stmt = select(Alert)
-    if rule_id:
-        stmt = stmt.where(Alert.rule_id == rule_id)
-    if before_id:
-        stmt = stmt.where(col(Alert.id) < before_id)
-    rows = db.exec(stmt.order_by(col(Alert.id).desc()).limit(limit)).all()
-    items = [AlertOut.model_validate(r) for r in rows]
-    return AlertPage(items=items, next_before_id=items[-1].id if len(items) == limit else None)

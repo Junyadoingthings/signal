@@ -11,7 +11,7 @@ dev: ## Run API (:8000) and UI (:5173) with reload, no Docker
 	./scripts/dev.sh
 
 backend: ## Run only the API with reload
-	cd backend && uv run uvicorn app.main:create_app --factory --reload --host 127.0.0.1 --port 8000
+	cd backend && uv run uvicorn app.main:create_app --factory --reload --host 127.0.0.1 --port 8000 --timeout-graceful-shutdown 5
 
 frontend: ## Run only the UI dev server
 	cd frontend && npm run dev

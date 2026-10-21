@@ -4,10 +4,11 @@ A self-hosted mini SIEM and detection console: ingest security logs, normalise t
 run ATT&CK-mapped detections, correlate alerts into incidents and triage them from a
 keyboard-first console.
 
-> **Status: Phase 3 of 7 (detection).** Auth, roles, audit trail, design system,
-> ingestion for every v1 source, and a tested detection engine with 16 rules mapped to
-> MITRE ATT&CK v20.0 are in place. Correlation and triage land next. This README is
-> rewritten in full at the end (Phase 7).
+> **Status: Phase 4 of 7 (correlation & triage).** Ingestion for every v1 source, a
+> tested detection engine with 16 rules mapped to MITRE ATT&CK v20.0, correlation into
+> scored incidents with an ATT&CK storyline, and a keyboard-driven triage console with a
+> full audit trail are in place. Investigation (entities, graph, hunt) lands next. This
+> README is rewritten in full at the end (Phase 7).
 
 ## Detections
 

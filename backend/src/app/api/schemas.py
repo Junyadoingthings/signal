@@ -318,3 +318,136 @@ class TacticOut(BaseModel):
 class AttackOut(BaseModel):
     version: str
     tactics: list[TacticOut]
+
+
+# ---------------------------------------------------------------- triage
+
+StatusLiteral = Literal["new", "investigating", "closed"]
+VerdictLiteral = Literal["true_positive", "false_positive", "benign_true_positive"]
+
+
+class AlertRow(AlertOut):
+    rule_title: str
+    tactic: str | None
+    assignee_id: int | None
+    assignee_name: str | None
+    acknowledged_at: datetime | None
+    closed_at: datetime | None
+
+
+class AlertList(BaseModel):
+    items: list[AlertRow]
+    total: int
+    offset: int
+    limit: int
+
+
+class AlertRuleInfo(BaseModel):
+    id: str
+    title: str
+    description: str
+    severity: str
+    logic_type: str
+    primary_tactic: str | None
+    techniques: list[TechniqueRef]
+    false_positives: list[str]
+
+
+class AlertDetail(BaseModel):
+    alert: AlertRow
+    rule: AlertRuleInfo
+    events: list[EventOut]
+    events_total: int
+
+
+class TriageUpdate(StrictModel):
+    status: StatusLiteral | None = None
+    verdict: VerdictLiteral | None = None
+    assignee_id: int | None = None
+    unassign: bool = False
+
+
+class BulkTriage(TriageUpdate):
+    ids: list[int] = Field(min_length=1, max_length=500)
+
+
+class BulkResult(BaseModel):
+    updated: list[int]
+    errors: dict[int, str]
+
+
+class IncidentUpdate(TriageUpdate):
+    close_alerts: bool = False
+
+
+class IncidentRow(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: str
+    score: int
+    severity: str
+    status: str
+    verdict: str | None
+    assignee_id: int | None
+    tactics: list[str]
+    entities: dict[str, Any]
+    alert_count: int
+    first_event_at: datetime
+    last_event_at: datetime
+    created_at: datetime
+    updated_at: datetime
+    closed_at: datetime | None
+
+
+class IncidentList(BaseModel):
+    items: list[IncidentRow]
+    total: int
+
+
+class StoryStep(BaseModel):
+    alert_id: int
+    rule_id: str
+    title: str
+    tactic: str | None
+    techniques: list[str]
+    severity: str
+    time: datetime
+    status: str
+
+
+class IncidentDetail(BaseModel):
+    incident: IncidentRow
+    alerts: list[AlertRow]
+    storyline: list[StoryStep]
+
+
+NoteText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=20000)]
+
+
+class NoteCreate(StrictModel):
+    markdown: NoteText
+
+
+class NoteOut(BaseModel):
+    id: int
+    author_id: int
+    author_name: str
+    markdown: str
+    created_at: datetime
+
+
+class HistoryEntry(BaseModel):
+    kind: Literal["audit", "note"]
+    ts: datetime
+    actor: str | None
+    action: str | None = None
+    before: dict[str, Any] | None = None
+    after: dict[str, Any] | None = None
+    note: NoteOut | None = None
+
+
+class UserBrief(BaseModel):
+    id: int
+    display_name: str
+    role: str

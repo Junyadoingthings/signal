@@ -16,4 +16,5 @@ HEALTHCHECK --interval=10s --timeout=3s --retries=5 \
   CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/health').status==200 else 1)"
 # The API is only reachable from the nginx container, so trusting its forwarded headers is safe.
 CMD ["uvicorn", "app.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", \
-     "--proxy-headers", "--forwarded-allow-ips", "*", "--no-server-header"]
+     "--proxy-headers", "--forwarded-allow-ips", "*", "--no-server-header", \
+     "--timeout-graceful-shutdown", "10"]

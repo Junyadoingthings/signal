@@ -77,6 +77,10 @@ class DetectionSettings(BaseModel):
     business_start: str = "08:00"
     business_end: str = "18:00"
     business_days: list[int] = Field(default_factory=lambda: [0, 1, 2, 3, 4])
+    # Alerts sharing an entity within this many minutes join the same incident.
+    correlation_window_minutes: int = Field(default=120, ge=5, le=7 * 24 * 60)
+    # Entity values that must never link incidents (shared infrastructure, NAT, etc.).
+    correlation_exclusions: list[str] = Field(default_factory=list, max_length=500)
 
     @field_validator("business_timezone")
     @classmethod

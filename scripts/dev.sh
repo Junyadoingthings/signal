@@ -9,6 +9,6 @@ if [[ ! -f .env ]]; then
 fi
 
 trap 'kill 0' EXIT INT TERM
-(cd backend && uv run uvicorn app.main:create_app --factory --reload --host 127.0.0.1 --port 8000) &
+(cd backend && uv run uvicorn app.main:create_app --factory --reload --host 127.0.0.1 --port 8000 --timeout-graceful-shutdown 5) &
 (cd frontend && npm run dev) &
 wait

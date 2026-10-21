@@ -14,6 +14,7 @@ logic:
   group_by: [host, dns_domain]
   window: 5m
   threshold: 150
+correlate_on: [host]
 false_positives:
   - Busy services resolving their own back end without caching.
   - Telemetry and update clients with aggressive retry loops.

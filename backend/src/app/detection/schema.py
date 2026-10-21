@@ -36,6 +36,10 @@ def parse_duration(value: str | int) -> timedelta:
     return timedelta(seconds=int(m.group(1)) * _UNITS[m.group(2)])
 
 
+CorrelateField = Literal["host", "user", "src_ip"]
+DEFAULT_CORRELATE: tuple[CorrelateField, ...] = ("host", "user", "src_ip")
+
+
 class Strict(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -140,6 +144,12 @@ class RuleSpec(Strict):
     references: list[str] = Field(default_factory=list)
     enabled: bool = True
     tags: list[str] = Field(default_factory=list)
+    # Which alert entities may link this rule's alerts into an incident. A web scanner
+    # hitting web01 shouldn't merge with everything else on web01, so web rules link on
+    # the attacker IP only.
+    correlate_on: list[CorrelateField] = Field(
+        default_factory=lambda: list(DEFAULT_CORRELATE), min_length=1
+    )
 
     @model_validator(mode="after")
     def _conditions_compile(self) -> "RuleSpec":

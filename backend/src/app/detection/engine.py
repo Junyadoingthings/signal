@@ -357,6 +357,7 @@ class Engine:
                     events=involved,
                     hits=[h for step in chain for _, hs in step[-1:] for h in hs] + final_hits,
                     window=logic.within,
+                    primary=final_event,
                     context={
                         "type": "sequence",
                         "group": dict(zip(logic.by, k, strict=True)),

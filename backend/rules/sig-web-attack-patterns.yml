@@ -26,6 +26,7 @@ logic:
   suppress:
     by: [src_ip]
     window: 1h
+correlate_on: [src_ip]
 false_positives:
   - Your own authorised vulnerability scans (allow-list the scanner IP).
   - Search pages where users legitimately type quotes and SQL words.

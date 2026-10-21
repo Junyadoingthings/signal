@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request
 
-from app.api.deps import DB, AdminUser, client_ip
-from app.api.schemas import UserCreate, UserOut, UserUpdate
+from app.api.deps import DB, AdminUser, CurrentUser, client_ip
+from app.api.schemas import UserBrief, UserCreate, UserOut, UserUpdate
 from app.core.errors import APIError
 from app.core.security import hash_password
 from app.services import audit
@@ -92,3 +92,13 @@ def update_user(user_id: int, body: UserUpdate, request: Request, admin: AdminUs
         ip=client_ip(request),
     )
     return user
+
+
+@router.get("/directory", response_model=list[UserBrief])
+def directory(_: CurrentUser, db: DB) -> list[UserBrief]:
+    """Active users for assignment pickers (any signed-in user)."""
+    return [
+        UserBrief(id=u.id or 0, display_name=u.display_name, role=u.role)
+        for u in SqlUserRepository(db).list()
+        if u.is_active
+    ]

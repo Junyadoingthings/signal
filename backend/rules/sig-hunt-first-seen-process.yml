@@ -13,6 +13,7 @@ logic:
   value: process_name
   min_history: 1d
 tags: [hunting]
+correlate_on: [host]
 false_positives:
   - Software installs, updates and new admin tools.
 references:

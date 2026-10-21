@@ -190,6 +190,7 @@ def test_rule__sig_auth_success_after_brute_force__fires(h: Harness) -> None:
     h.ingest(events)
     [a] = h.alerts("sig-auth-success-after-brute-force")
     assert a.severity == "critical"
+    assert a.user == "deploy"  # the account that got in, not the one being guessed
     steps = a.match_context["steps"]
     assert steps[0]["name"] == "failed logons"
     assert steps[0]["count"] == 6

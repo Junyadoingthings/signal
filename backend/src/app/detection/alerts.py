@@ -35,6 +35,7 @@ def upsert_alert(
     window: timedelta,
     context: dict[str, Any],
     severity: Severity | None = None,
+    primary: Mapping[str, Any] | None = None,
 ) -> tuple[Alert, bool]:
     """Returns (alert, created)."""
     if not events:
@@ -54,15 +55,22 @@ def upsert_alert(
         .order_by(col(Alert.last_event_at).desc())
     ).first()
 
+    def entity(field: str) -> Any:
+        # The event that completed the detection names the entity when there is one
+        # (e.g. the account that logged in after a brute force, not the guessed ones).
+        if primary is not None and primary.get(field):
+            return primary.get(field)
+        return _mode(e.get(field) for e in events)
+
     created = alert is None
     if alert is None:
         alert = Alert(
             rule_id=rule.id,
             severity=severity or rule.severity,
             group_key=group_key,
-            host=_mode(e.get("host") for e in events),
-            user=_mode(e.get("user") for e in events),
-            src_ip=_mode(e.get("src_ip") for e in events),
+            host=entity("host"),
+            user=entity("user"),
+            src_ip=entity("src_ip"),
             first_event_at=first,
             last_event_at=last,
             match_context={},
@@ -70,9 +78,9 @@ def upsert_alert(
     else:
         alert.first_event_at = min(alert.first_event_at, first)
         alert.last_event_at = max(alert.last_event_at, last)
-        alert.host = alert.host or _mode(e.get("host") for e in events)
-        alert.user = alert.user or _mode(e.get("user") for e in events)
-        alert.src_ip = alert.src_ip or _mode(e.get("src_ip") for e in events)
+        alert.host = alert.host or entity("host")
+        alert.user = alert.user or entity("user")
+        alert.src_ip = alert.src_ip or entity("src_ip")
 
     alert.match_context = {
         **context,

@@ -9,11 +9,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session
 
 from app import __version__
-from app.api import audit, auth, events, ingest, rules, system, users
+from app.api import alerts, audit, auth, events, incidents, ingest, live, rules, system, users
 from app.core.config import Settings, get_settings
 from app.core.errors import install_error_handlers
 from app.core.middleware import BodySizeLimitMiddleware, SecurityHeadersMiddleware
 from app.core.ratelimit import limiter
+from app.correlation.correlator import Correlator
 from app.detection.engine import Engine
 from app.detection.loader import load_rules, sync_rules
 from app.ingest import pipeline
@@ -23,9 +24,11 @@ from app.ingest.service import (
     fail_interrupted_batches,
     spool_dir,
 )
+from app.live import hub
 from app.services.bootstrap import ensure_admin
 from app.storage.db import get_engine
 from app.storage.migrate import upgrade_to_head
+from app.storage.models import utcnow
 from app.storage.repositories import SqlSessionRepository
 
 log = logging.getLogger("signal")
@@ -45,7 +48,16 @@ def create_app(settings: Settings | None = None, *, run_migrations: bool = True)
     rule_files = load_rules()
     engine = Engine(spec for spec, _ in rule_files)
 
+    correlator = Correlator(engine)
+
+    def correlate(db: Session, alert_ids: list[int]) -> None:
+        incident_ids = correlator.on_alerts(db, alert_ids)
+        hub.publish({"type": "alerts", "ids": alert_ids, "incidents": incident_ids})
+
+    engine.alert_hooks.append(correlate)
+
     def detect(db: Session, event_ids: list[int]) -> None:
+        hub.publish({"type": "events", "count": len(event_ids), "at": utcnow().isoformat()})
         engine.on_ingest(db, event_ids)
 
     @asynccontextmanager
@@ -115,6 +127,9 @@ def create_app(settings: Settings | None = None, *, run_migrations: bool = True)
         ingest.router,
         events.router,
         rules.router,
+        alerts.router,
+        incidents.router,
+        live.router,
     ):
         app.include_router(r)
     return app
