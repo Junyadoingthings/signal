@@ -362,3 +362,20 @@ export interface EntityDetail {
   nodes: GraphNode[];
   edges: GraphEdge[];
 }
+
+export interface OverviewData {
+  start: string;
+  end: string;
+  bucket_seconds: number;
+  buckets: Bucket[];
+  events_total: number;
+  markers: { id: number; ts: string; severity: Severity; title: string }[];
+  open_incidents: Record<Severity, number>;
+  open_alerts: Record<Severity, number>;
+  noisy_rules: { rule_id: string; title: string; severity: Severity; count: number }[];
+  top_entities: { type: EntityType; value: string; count: number; top_severity: Severity }[];
+  fired_tactics: Record<string, number>;
+  mttr_seconds: number | null;
+  closed_count: number;
+  verdicts: Record<string, number>;
+}

@@ -16,6 +16,24 @@ const status: SystemStatus = {
   last_ingest_at: null,
 };
 
+const zero = { critical: 0, high: 0, medium: 0, low: 0 };
+const emptyOverview = {
+  start: "2026-10-20T00:00:00Z",
+  end: "2026-10-21T00:00:00Z",
+  bucket_seconds: 1800,
+  buckets: [],
+  events_total: 0,
+  markers: [],
+  open_incidents: zero,
+  open_alerts: zero,
+  noisy_rules: [],
+  top_entities: [],
+  fired_tactics: {},
+  mttr_seconds: null,
+  closed_count: 0,
+  verdicts: {},
+};
+
 function me(role: "admin" | "analyst"): Me {
   return {
     csrf_token: "csrf-123",
@@ -57,6 +75,8 @@ function mockApi(session: Me | null) {
       );
     }
     if (url === "/api/system/status") return Promise.resolve(json(status));
+    if (url.startsWith("/api/overview")) return Promise.resolve(json(emptyOverview));
+    if (url === "/api/attack") return Promise.resolve(json({ version: "20.0", tactics: [] }));
     return Promise.resolve(json({ error: { code: "not_found", message: "nope" } }, 404));
   });
   vi.stubGlobal("fetch", fetchMock);

@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { clsx } from "clsx";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Link } from "react-router";
-import { Activity } from "@/components/Activity";
 import { ExternalIcon } from "@/components/icons";
 import { RawLog } from "@/components/RawLog";
 import { Button, Kbd, Select, SeverityBadge } from "@/components/ui";
@@ -12,6 +11,9 @@ import { entityPath } from "@/lib/entity";
 import { formatNumber, formatTimestamp } from "@/lib/format";
 import type { AlertDetail, AlertStatus, EventRecord, MatchHit, Verdict } from "@/lib/types";
 import { STATUS_LABEL, useDirectory, useTriage, VERDICT_LABEL } from "./triage";
+
+// Markdown rendering is heavy and only needed once the notes panel is on screen.
+const Activity = lazy(() => import("@/components/Activity").then((m) => ({ default: m.Activity })));
 
 function safeHref(url: string | null): string | undefined {
   if (!url) return undefined;
@@ -156,7 +158,9 @@ export function Inspector({ alertId, onClose }: { alertId: number; onClose: () =
             </Section>
             <Events detail={d} />
             <Section title="Notes & history">
-              <Activity target="alerts" id={alertId} />
+              <Suspense fallback={<div className="skeleton h-16 w-full" />}>
+                <Activity target="alerts" id={alertId} />
+              </Suspense>
             </Section>
           </div>
         </div>

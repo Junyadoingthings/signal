@@ -635,9 +635,9 @@ function TokensPanel() {
         <table className="w-full min-w-[36rem] text-left">
           <thead>
             <tr className="border-b border-border">
-              {["Name", "Prefix", "Created", "Last used", ""].map((h, i) => (
-                <th key={i} scope="col" className="label-caps px-4 py-2.5 font-medium">
-                  {h}
+              {["Name", "Prefix", "Created", "Last used", "Actions"].map((h) => (
+                <th key={h} scope="col" className="label-caps px-4 py-2.5 font-medium">
+                  {h === "Actions" ? <span className="sr-only">{h}</span> : h}
                 </th>
               ))}
             </tr>

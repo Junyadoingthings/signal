@@ -1,19 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState, type ReactNode } from "react";
+import { lazy, useState, type ReactNode } from "react";
 import { createBrowserRouter, Navigate, Outlet, RouterProvider, useLocation } from "react-router";
-import { AuditPage } from "@/features/admin/AuditPage";
-import { UsersPage } from "@/features/admin/UsersPage";
 import { LoginPage } from "@/features/auth/LoginPage";
-import { BatchPage } from "@/features/ingest/BatchPage";
-import { IngestPage } from "@/features/ingest/IngestPage";
 import { AlertsPage } from "@/features/alerts/AlertsPage";
-import { EntityPage } from "@/features/entities/EntityPage";
-import { HuntPage } from "@/features/hunt/HuntPage";
-import { IncidentPage } from "@/features/incidents/IncidentPage";
-import { IncidentsPage } from "@/features/incidents/IncidentsPage";
 import { OverviewPage } from "@/features/overview/OverviewPage";
-import { RulePage } from "@/features/rules/RulePage";
-import { RulesPage } from "@/features/rules/RulesPage";
 import { ApiError } from "@/lib/api";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { LiveProvider } from "@/lib/live";
@@ -21,6 +11,37 @@ import { ThemeProvider } from "@/lib/theme";
 import type { Role } from "@/lib/types";
 import { NotFound } from "./NotFound";
 import { Shell } from "./Shell";
+
+const AuditPage = lazy(() =>
+  import("@/features/admin/AuditPage").then((m) => ({ default: m.AuditPage })),
+);
+const UsersPage = lazy(() =>
+  import("@/features/admin/UsersPage").then((m) => ({ default: m.UsersPage })),
+);
+const EntityPage = lazy(() =>
+  import("@/features/entities/EntityPage").then((m) => ({ default: m.EntityPage })),
+);
+const HuntPage = lazy(() =>
+  import("@/features/hunt/HuntPage").then((m) => ({ default: m.HuntPage })),
+);
+const IncidentPage = lazy(() =>
+  import("@/features/incidents/IncidentPage").then((m) => ({ default: m.IncidentPage })),
+);
+const IncidentsPage = lazy(() =>
+  import("@/features/incidents/IncidentsPage").then((m) => ({ default: m.IncidentsPage })),
+);
+const BatchPage = lazy(() =>
+  import("@/features/ingest/BatchPage").then((m) => ({ default: m.BatchPage })),
+);
+const IngestPage = lazy(() =>
+  import("@/features/ingest/IngestPage").then((m) => ({ default: m.IngestPage })),
+);
+const RulePage = lazy(() =>
+  import("@/features/rules/RulePage").then((m) => ({ default: m.RulePage })),
+);
+const RulesPage = lazy(() =>
+  import("@/features/rules/RulesPage").then((m) => ({ default: m.RulesPage })),
+);
 
 function RequireAuth() {
   const { user, loading } = useAuth();

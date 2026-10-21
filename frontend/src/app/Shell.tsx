@@ -1,5 +1,5 @@
 import { clsx } from "clsx";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { NavLink, Outlet, useLocation, useMatches } from "react-router";
 import { LogoutIcon, MoonIcon, SearchIcon, SunIcon } from "@/components/icons";
 import { Kbd, LogoMark } from "@/components/ui";
@@ -174,7 +174,17 @@ export function Shell() {
             fullBleed ? "overflow-hidden" : "overflow-y-auto px-4 py-6 sm:px-8 sm:py-8",
           )}
         >
-          <Outlet />
+          <Suspense
+            fallback={
+              <div className="p-8" role="status" aria-busy="true">
+                <span className="sr-only">Loading page</span>
+                <div className="skeleton h-7 w-48" />
+                <div className="skeleton mt-4 h-40 w-full max-w-3xl" />
+              </div>
+            }
+          >
+            <Outlet />
+          </Suspense>
         </main>
       </div>
 

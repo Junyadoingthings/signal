@@ -50,6 +50,7 @@ export function LiveProvider({ children, enabled }: { children: ReactNode; enabl
       statusTimer.current = window.setTimeout(() => {
         statusTimer.current = null;
         void qc.invalidateQueries({ queryKey: ["system"] });
+        void qc.invalidateQueries({ queryKey: ["overview"] });
       }, 1000);
     };
 

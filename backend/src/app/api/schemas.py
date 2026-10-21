@@ -527,3 +527,51 @@ class EntityDetail(BaseModel):
     events: list[EventOut]
     nodes: list[GraphNode]
     edges: list[GraphEdge]
+
+
+# ---------------------------------------------------------------- overview
+
+
+class RuleCount(BaseModel):
+    rule_id: str
+    title: str
+    severity: str
+    count: int
+
+
+class EntityCount(BaseModel):
+    type: str
+    value: str
+    count: int
+    top_severity: str
+
+
+class AlertMarker(BaseModel):
+    id: int
+    ts: datetime
+    severity: str
+    title: str
+
+
+class SeverityCounts(BaseModel):
+    critical: int = 0
+    high: int = 0
+    medium: int = 0
+    low: int = 0
+
+
+class Overview(BaseModel):
+    start: datetime
+    end: datetime
+    bucket_seconds: int
+    buckets: list[Bucket]
+    events_total: int
+    markers: list[AlertMarker]
+    open_incidents: SeverityCounts
+    open_alerts: SeverityCounts
+    noisy_rules: list[RuleCount]
+    top_entities: list[EntityCount]
+    fired_tactics: dict[str, int]
+    mttr_seconds: float | None
+    closed_count: int
+    verdicts: dict[str, int]

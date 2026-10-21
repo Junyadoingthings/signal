@@ -77,16 +77,19 @@ export function IncidentPage() {
             ) : null}
           </div>
           {inc ? (
-            <div className="text-right">
-              <p className="label-caps">Score</p>
-              <p
-                className={clsx(
-                  "font-mono text-display leading-none tracking-[var(--tracking-tighter)]",
-                  inc.score >= 80 ? "text-accent-fg" : "text-fg",
-                )}
-              >
-                {inc.score}
-              </p>
+            <div className="flex flex-col items-end gap-3">
+              <ReportButtons incidentId={incidentId} />
+              <div className="text-right">
+                <p className="label-caps">Score</p>
+                <p
+                  className={clsx(
+                    "font-mono text-display leading-none tracking-[var(--tracking-tighter)]",
+                    inc.score >= 80 ? "text-accent-fg" : "text-fg",
+                  )}
+                >
+                  {inc.score}
+                </p>
+              </div>
             </div>
           ) : null}
         </div>
@@ -327,5 +330,52 @@ function IncidentTriage({
         </p>
       ) : null}
     </Panel>
+  );
+}
+
+function ReportButtons({ incidentId }: { incidentId: number }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const download = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/incidents/${String(incidentId)}/report?format=md`, {
+        credentials: "same-origin",
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      const url = URL.createObjectURL(await res.blob());
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `incident-${String(incidentId)}.md`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError("Couldn't build the report.");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <div className="flex gap-2">
+        <Button size="sm" onClick={() => void download()} disabled={busy}>
+          Download Markdown
+        </Button>
+        <a
+          href={`/api/incidents/${String(incidentId)}/report?format=html`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex h-7 items-center rounded-sm border border-border bg-surface-2 px-2.5 text-xs font-medium hover:border-border-strong hover:bg-surface-3"
+        >
+          Printable report (PDF)
+        </a>
+      </div>
+      {error ? (
+        <p role="alert" className="text-2xs text-danger">
+          {error}
+        </p>
+      ) : null}
+    </div>
   );
 }

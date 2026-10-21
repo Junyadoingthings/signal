@@ -55,7 +55,8 @@ class SecurityHeadersMiddleware:
             if message["type"] == "http.response.start":
                 headers = [h for h in message.get("headers", []) if h[0].lower() != b"server"]
                 headers.extend(BASE_HEADERS)
-                headers.append((b"content-security-policy", csp.encode()))
+                if not any(h[0].lower() == b"content-security-policy" for h in headers):
+                    headers.append((b"content-security-policy", csp.encode()))
                 if path.startswith("/api/"):
                     headers.append((b"cache-control", b"no-store"))
                 if self.hsts:

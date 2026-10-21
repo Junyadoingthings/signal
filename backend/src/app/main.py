@@ -19,6 +19,8 @@ from app.api import (
     incidents,
     ingest,
     live,
+    overview,
+    reports,
     rules,
     system,
     users,
@@ -145,6 +147,8 @@ def create_app(settings: Settings | None = None, *, run_migrations: bool = True)
         live.router,
         hunt.router,
         entities.router,
+        overview.router,
+        reports.router,
     ):
         app.include_router(r)
     return app
