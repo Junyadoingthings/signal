@@ -451,3 +451,79 @@ class UserBrief(BaseModel):
     id: int
     display_name: str
     role: str
+
+
+# ---------------------------------------------------------------- hunt & entities
+
+
+class HuntResult(BaseModel):
+    items: list[EventOut]
+    total: int
+    offset: int
+    limit: int
+
+
+class Bucket(BaseModel):
+    start: datetime
+    count: int
+    failures: int
+
+
+class Histogram(BaseModel):
+    start: datetime
+    end: datetime
+    bucket_seconds: int
+    buckets: list[Bucket]
+    total: int
+
+
+class SavedSearchIn(StrictModel):
+    name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)]
+    query: Annotated[str, StringConstraints(max_length=1000)]
+    time_range: Annotated[
+        str, StringConstraints(max_length=64, pattern=r"^[A-Za-z0-9:.,_ -]*$")
+    ] = "24h"
+
+
+class SavedSearchOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    owner_id: int
+    name: str
+    query: str
+    time_range: str
+    created_at: datetime
+
+
+class EntityOut(BaseModel):
+    type: str
+    value: str
+    first_seen: datetime
+    last_seen: datetime
+    event_count: int
+
+
+class GraphNode(BaseModel):
+    id: str
+    type: str
+    value: str
+    event_count: int
+    hop: int
+
+
+class GraphEdge(BaseModel):
+    source: str
+    target: str
+    relation: str
+    count: int
+
+
+class EntityDetail(BaseModel):
+    entity: EntityOut
+    actions: dict[str, int]
+    alerts: list[AlertRow]
+    incident_ids: list[int]
+    events: list[EventOut]
+    nodes: list[GraphNode]
+    edges: list[GraphEdge]

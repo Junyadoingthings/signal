@@ -9,7 +9,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session
 
 from app import __version__
-from app.api import alerts, audit, auth, events, incidents, ingest, live, rules, system, users
+from app.api import (
+    alerts,
+    audit,
+    auth,
+    entities,
+    events,
+    hunt,
+    incidents,
+    ingest,
+    live,
+    rules,
+    system,
+    users,
+)
 from app.core.config import Settings, get_settings
 from app.core.errors import install_error_handlers
 from app.core.middleware import BodySizeLimitMiddleware, SecurityHeadersMiddleware
@@ -130,6 +143,8 @@ def create_app(settings: Settings | None = None, *, run_migrations: bool = True)
         alerts.router,
         incidents.router,
         live.router,
+        hunt.router,
+        entities.router,
     ):
         app.include_router(r)
     return app
