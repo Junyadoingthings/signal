@@ -1,4 +1,6 @@
-.PHONY: help install dev backend frontend test test-backend test-frontend lint fmt migrate build up down
+SEED_URL ?= http://localhost:5173
+
+.PHONY: help seed e2e install dev backend frontend test test-backend test-frontend lint fmt migrate build up down
 
 help: ## Show targets
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  \033[1m%-15s\033[0m %s\n", $$1, $$2}'
@@ -16,7 +18,10 @@ backend: ## Run only the API with reload
 frontend: ## Run only the UI dev server
 	cd frontend && npm run dev
 
-test: test-backend test-frontend ## Run all tests
+test: test-backend test-frontend ## Run unit and component tests
+
+e2e: ## Playwright: sign in, upload sample, incident, triage, report (own servers and DB)
+	cd e2e && npm ci && npx playwright install chromium && npx playwright test
 
 test-backend:
 	cd backend && uv run pytest
@@ -31,6 +36,9 @@ lint: ## ruff + mypy + eslint + prettier + tsc
 fmt: ## Auto-format everything
 	cd backend && uv run ruff check --fix . && uv run ruff format .
 	cd frontend && npm run format
+
+seed: ## Generate synthetic logs (3 attacks + bait) and upload them to a running SIGNAL
+	python3 tools/seed/load.py --url $(SEED_URL)
 
 migrate: ## Apply database migrations
 	cd backend && uv run python -m app.storage.migrate

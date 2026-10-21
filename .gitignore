@@ -26,3 +26,4 @@ test-results/
 .DS_Store
 .idea/
 .vscode/
+sample-data/

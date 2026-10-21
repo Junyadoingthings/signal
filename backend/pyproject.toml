@@ -48,6 +48,8 @@ ignore = ["B008"]
 "tests/**" = ["S101", "S105", "S106", "E501"]
 "src/app/storage/migrations/**" = ["N999", "E501", "F401", "I001"]
 "src/app/reports/builder.py" = ["E501"]
+"scripts/*.py" = ["S311", "E501", "S101"]
+"**/seed/generate.py" = ["S311", "E501", "E702", "E701", "B007", "S101"]
 "src/app/api/reports.py" = ["E501"]
 
 [tool.mypy]

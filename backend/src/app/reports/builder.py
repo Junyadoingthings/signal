@@ -116,6 +116,21 @@ def build(db: Session, incident: Incident) -> Report:
         for h in history_for(db, "incident", incident.id or 0)
         if h.kind == "audit"
     ]
+    for a in alerts:  # alert-level triage is part of the incident's story
+        for h in history_for(db, "alert", a.id or 0):
+            if h.kind == "audit":
+                change = ", ".join(
+                    f"{k.replace('_id', '')} {str((h.before or {}).get(k) or 'none').replace('_', ' ')} → "
+                    f"{str(v).replace('_', ' ')}"
+                    for k, v in (h.after or {}).items()
+                    if (h.before or {}).get(k) != v
+                )
+                hist.append((h.ts, h.actor or "system", f"alert #{a.id}: {change or h.action}"))
+            elif h.note:
+                hist.append((h.ts, h.actor or "system", f"alert #{a.id}: note added"))
+                notes.append((f"{h.actor} (alert #{a.id})", h.ts, h.note.markdown))
+    hist.sort(key=lambda x: x[0])
+    notes.sort(key=lambda x: x[1])
     return Report(
         incident=incident,
         generated_at=utcnow(),
@@ -209,7 +224,7 @@ def to_markdown(r: Report) -> str:
         ent = " · ".join(x for x in (a.host, a.user, a.src_ip) if x)
         out.append(
             f"| {a.id} | {_plain(r.rule_titles.get(a.rule_id, a.rule_id))} | {a.severity} "
-            f"| {_code(ent) if ent else '—'} | {a.event_count} | {a.status} |"
+            f"| {_code(ent) if ent else '—'} | {a.event_count} | {a.status}{f' · {a.verdict}' if a.verdict else ''} |"
         )
     out += ["", "## Analyst notes", ""]
     if r.notes:
@@ -311,7 +326,7 @@ def to_html(r: Report) -> str:
         ent = " · ".join(x for x in (a.host, a.user, a.src_ip) if x) or "—"
         p.append(
             f"<tr><td>{a.id}</td><td>{e(r.rule_titles.get(a.rule_id, a.rule_id))}</td>"
-            f"<td>{e(str(a.severity))}</td><td class=mono>{e(ent)}</td><td>{a.event_count}</td><td>{e(str(a.status))}</td></tr>"
+            f"<td>{e(str(a.severity))}</td><td class=mono>{e(ent)}</td><td>{a.event_count}</td><td>{e(str(a.status))}{e(' · ' + str(a.verdict).replace('_', ' ')) if a.verdict else ''}</td></tr>"
         )
     p.append("</table><h2>Analyst notes</h2>")
     p += [

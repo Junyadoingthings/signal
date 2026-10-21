@@ -122,3 +122,23 @@ def test_report_requires_login_and_audits(client: TestClient, seeded: dict[str, 
     assert client.get("/api/incidents/9999/report").status_code == 404
     client.cookies.clear()
     assert client.get(f"/api/incidents/{iid}/report").status_code == 401
+
+
+def test_report_includes_alert_triage(client: TestClient, seeded: dict[str, str]) -> None:
+    iid = incident_id(client)
+    alert = client.get("/api/alerts", params={"incident_id": iid}).json()["items"][0]
+    client.patch(
+        f"/api/alerts/{alert['id']}",
+        json={"status": "closed", "verdict": "true_positive"},
+        headers=seeded,
+    )
+    client.post(
+        f"/api/alerts/{alert['id']}/notes",
+        json={"markdown": "Checked the source IP."},
+        headers=seeded,
+    )
+    md = client.get(f"/api/incidents/{iid}/report").text
+    assert f"alert \\#{alert['id']}" in md  # '#' is escaped in untrusted-adjacent text
+    assert "verdict none → true positive" in md
+    assert "closed · true_positive" in md
+    assert "Checked the source IP." in md

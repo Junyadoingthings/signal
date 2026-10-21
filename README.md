@@ -1,171 +1,145 @@
-# SIGNAL
+# signal
 
-**A self-hosted mini SIEM. It ingests security logs, runs detections mapped to MITRE ATT&CK, groups related alerts into scored incidents, and gives an analyst a keyboard-first console to triage them.**
+**A self-hosted mini SIEM and detection console.** Ingest security logs, normalise them,
+run ATT&CK-mapped detections, correlate alerts into scored incidents, and triage them
+from a fast, keyboard-driven console: *alert → triage → investigate → verdict → report.*
 
-Built as a SOC analyst portfolio project to cover the Tier 1 loop end to end:
-**alert → triage → investigate → true/false positive → document.**
+![Overview: live event-rate trace with alert ticks, ATT&CK coverage, open incidents](docs/screenshots/overview.webp)
 
-![FastAPI](https://img.shields.io/badge/API-FastAPI-009688)
-![React](https://img.shields.io/badge/UI-React_+_TypeScript-3178c6)
-![SQLite](https://img.shields.io/badge/DB-SQLite-003b57)
-![ATT&CK](https://img.shields.io/badge/MITRE_ATT%26CK-v20.0-c0392b)
-
-> **Status:** Phases 1–4 of 7 are done (ingest, detection, correlation, triage).
-> Phase 5 (entity pages, entity graph, hunt search) is in progress.
-
-<!-- Add a screenshot or GIF of the incident storyline here: docs/hero.png -->
-
----
+<table>
+<tr>
+<td width="50%"><img src="docs/screenshots/alerts.webp" alt="Alert queue with severity, incident links and keyboard hints"></td>
+<td width="50%"><img src="docs/screenshots/hunt.webp" alt="Hunt: query language, time scrubber and results"></td>
+</tr>
+<tr>
+<td><sub>Virtualised alert queue: <code>j</code>/<code>k</code>, <code>e</code> to triage, bulk actions</sub></td>
+<td><sub>Hunt: <code>user:admin AND outcome:failure AND src_ip:10.0.*</code> with a brush-select time scrubber</sub></td>
+</tr>
+</table>
 
 ## What it does
 
-- **Ingests the logs a SOC actually sees.** Linux auth, Windows Security and Sysmon (including raw `.evtx`), nginx/Apache access logs, Wazuh alerts, and any JSON Lines source with a field mapping. The format is detected from the file content, so you just drag and drop.
-- **Normalises everything into one event schema,** so one rule can cover several log sources.
-- **Runs 16 YAML detection rules** mapped to MITRE ATT&CK v20.0. Each rule has one test that proves it fires and one that proves it stays quiet. Every technique ID is checked against a pinned copy of the official matrix.
-- **Correlates alerts into incidents.** Alerts are linked when they share a host, user or source IP inside a time window. Each incident is scored on severity, how many ATT&CK tactics it spans, and whether it moves forward through the kill chain. It's laid out as a storyline across tactics.
-- **Supports a real triage workflow.** There's an alert queue, an inspector with safe raw-log rendering, true/false positive verdicts and notes, and a full audit trail of who did what.
-- **Streams live from your machines.** `signal_tail.py` is a standard-library-only shipper. It follows log rotation, resumes where it left off, and is safe to retry.
-- **Supports retro-hunts.** You can run a new rule against historical events, not just new ones.
+- **Ingests** Linux auth logs, Windows Security and Sysmon (`.evtx`, `evtx_dump` JSON, PowerShell `Get-WinEvent` JSON, Wazuh-wrapped events), nginx/Apache access logs, Wazuh `alerts.json`, and any JSON Lines via a field mapping, by upload, API or a live `signal-tail` shipper. Every raw record is kept; unparsable lines go to a visible bucket with the reason.
+- **Detects** with 16 Sigma-inspired YAML rules (match, threshold, sequence, first-seen), each with a positive and a negative test, mapped to **MITRE ATT&CK v20.0**, with a retro-hunt over history.
+- **Correlates** alerts that share a host, user or IP into one incident, scored by severity, tactic breadth and kill-chain order, shown as an **ATT&CK storyline**.
+- **Investigates** with entity pages and a relationship graph, a hunt query language, a time scrubber and saved searches.
+- **Triages** with a status/verdict workflow, notes and a full audit trail, then **exports** an incident report as Markdown or a print-ready PDF page.
+- **Protects itself**: Argon2id, CSRF, server-side roles, CSP, sanitised log rendering, injection-safe search. See [SECURITY.md](SECURITY.md).
+
+## Run it
+
+**Docker (one command)** *(written, not yet tested by the author, see below)*
+
+```bash
+cp .env.example .env        # set SIGNAL_ADMIN_EMAIL and a 12+ character SIGNAL_ADMIN_PASSWORD
+docker compose up --build   # http://localhost:8080
+```
+
+**Without Docker** (needs [uv](https://docs.astral.sh/uv/) and Node 22)
+
+```bash
+cp .env.example .env
+make install
+make dev                    # API :8000, UI http://localhost:5173
+make seed                   # in a second terminal: load the sample attacks
+```
+
+Sign in with the admin from `.env`. Press `⌘K` for the command palette and `?` for shortcuts.
+
+## Sample attacks
+
+`make seed` loads one business day for a fake company with **three planted attacks** and
+**four false-positive baits**. Each should become exactly what [docs/scenarios.md](docs/scenarios.md)
+says, and `backend/tests/test_seed_scenarios.py` checks that on every test run.
+
+| Scenario | Becomes |
+|---|---|
+| SSH brute force → success → sudo → new admin user (Linux) | 1 critical incident, 6 alerts |
+| Phishing → Word spawns encoded PowerShell → certutil → new admin → log cleared (Windows) | 1 critical incident, 7 alerts |
+| DNS exfiltration from a workstation (Sysmon 22) | 1 incident, 2 alerts |
+| Backup job at 2 am, helpdesk creating a user, admin checking a CRL, a vuln scan | stand-alone alerts to triage and close |
+
+## Detection catalogue
+
+| Rule | Logic | Severity | Tactic | Techniques |
+|---|---|---|---|---|
+| SSH / RDP brute force | threshold | medium | Credential Access | `T1110.001` |
+| Password spraying | threshold | high | Credential Access | `T1110.003` |
+| Successful logon after brute force | sequence | critical | Initial Access | `T1110`, `T1078` |
+| certutil used to download or decode a file | match | high | Command and Control | `T1105`, `T1140` |
+| Windows Security log cleared | match | high | Defense Impairment | `T1685.005` |
+| Signed binary proxy execution with a remote payload | match | high | Stealth | `T1218.005`, `T1218.010`, `T1218.011` |
+| Encoded PowerShell command | match | high | Execution | `T1059.001`, `T1027.010` |
+| Office application spawned a shell or script host | match | high | Execution | `T1204.002`, `T1059.001`, `T1059.003`, `T1059.005` |
+| DNS tunnelling (long or high-entropy subdomains) | threshold | high | Exfiltration | `T1048.003`, `T1071.004` |
+| High DNS query volume to one domain | threshold | medium | Exfiltration | `T1048.003`, `T1071.004` |
+| First-seen process on host | first-seen | low | — | — |
+| User added to an administrative group | match | high | Persistence | `T1098.007` |
+| New local account created | match | medium | Persistence | `T1136.001` |
+| Privileged activity outside business hours | match | medium | Privilege Escalation | `T1078` |
+| Wazuh high-severity alert | match | critical | — | — |
+| Web attack patterns (SQLi, traversal, scanners) | match | medium | Initial Access | `T1190` |
+
+Rules live in [`backend/rules/`](backend/rules). Techniques are checked against a pinned copy of the official ATT&CK data in CI; a rule that uses an unknown, deprecated or revoked ID fails the build.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
   subgraph Sources
-    A[auth.log / secure]
-    B[EVTX · Sysmon · Security]
-    C[nginx / Apache]
-    D[Wazuh alerts.json]
-    E[JSON Lines]
+    A[Linux auth.log] --- B[Windows / Sysmon EVTX + JSON] --- C[nginx / Apache] --- D[Wazuh alerts] --- E[JSON Lines]
   end
-  T[signal_tail.py<br/>live shipper] -->|token auth| I
-  A & B & C & D & E -->|upload| I[Ingest<br/>sniff · parse · normalise · dedup]
-  I --> S[(SQLite)]
-  S --> R[Detection engine<br/>16 YAML rules]
-  R --> K[Correlator<br/>incidents + scoring]
-  K --> S
-  S --> API[FastAPI<br/>auth · roles · audit]
-  API --> UI[React console<br/>queue · inspector · storyline]
+  Sources -->|upload or signal-tail| I[Ingest: sniff → parse → normalise → dedup]
+  I --> U[(Unparsed bucket)]
+  I --> S[(SQLite via repository interface)]
+  S --> R[Detection engine<br/>match · threshold · sequence · first-seen]
+  R --> AL[Alerts] --> CO[Correlator → scored incidents]
+  CO --> API[FastAPI + WebSocket]
+  S --> API
+  API --> UI[React console<br/>queue · inspector · storyline · hunt · entity graph · overview]
 ```
 
-## Detection catalogue
+- **Backend:** Python 3.12, FastAPI, SQLModel/SQLAlchemy + Alembic, Pydantic v2, `python-evtx`, `defusedxml`, Argon2. Storage sits behind repository interfaces so Postgres can replace SQLite.
+- **Front end:** React 18, TypeScript (strict), Vite, Tailwind v4 design tokens, TanStack Query/Table/Virtual, React Flow, `cmdk`. The trace and scrubber are hand-written canvas/SVG.
+- **One process, no broker:** an in-process worker handles uploads; live updates use one WebSocket.
 
-Rules live in `backend/rules/` as Sigma-inspired YAML (`field|modifier: value` conditions combined with `all` / `any` / `not`). There are four logic types:
+## Quality
 
-| Logic | What it does | Example |
-|---|---|---|
-| `match` | Single-event condition | Encoded PowerShell |
-| `threshold` | Count, or distinct count, per key in a time window | SSH brute force, password spray |
-| `sequence` | A, then B, for the same entity | Successful logon after brute force |
-| `first_seen` | Value never seen before for this entity | First-seen process on host |
+- **Backend:** 247 tests (parsers on real EVTX samples, every rule positive and negative, correlation, triage, search injection, auth and permissions, the seeded scenarios). `ruff` and `mypy --strict` clean.
+- **Front end:** 32 tests (query bar, triage flow, scrubber, graph layout, XSS rendering) plus **axe-core** accessibility checks on seven views. Strict TypeScript and type-aware ESLint.
+- **End to end:** one Playwright test: sign in → upload the sample → see the incident → triage → export the report (`make e2e`).
+- **Performance:** on 100,000 events, hunts take 10–220 ms (`backend/scripts/perf_check.py`).
+- **Accessibility:** WCAG AA contrast computed for every colour pair in both themes, visible focus rings, `prefers-reduced-motion` honoured, severity never shown by colour alone.
 
-| Rule | Severity | Tactic | ATT&CK |
-|---|---|---|---|
-| SSH / RDP brute force | medium | Credential Access | T1110.001 |
-| Password spraying | high | Credential Access | T1110.003 |
-| Successful logon after brute force | critical | Initial Access | T1110, T1078 |
-| Web attack patterns (SQLi, traversal, scanners) | medium | Initial Access | T1190 |
-| Office app spawned a shell or script host | high | Execution | T1204.002, T1059.001/.003/.005 |
-| Encoded PowerShell command | high | Execution | T1059.001, T1027.010 |
-| New local account created | medium | Persistence | T1136.001 |
-| User added to an administrative group | high | Persistence | T1098.007 |
-| Privileged activity outside business hours | medium | Privilege Escalation | T1078 |
-| Signed binary proxy execution, remote payload | high | Stealth | T1218.005/.010/.011 |
-| Windows Security log cleared | high | Defense Impairment | T1685.005 |
-| certutil used to download or decode a file | high | Command and Control | T1105, T1140 |
-| DNS tunnelling (long / high-entropy subdomains) | high | Exfiltration | T1048.003, T1071.004 |
-| High DNS query volume to one domain | medium | Exfiltration | T1048.003, T1071.004 |
-| First-seen process on host | low | Hunting aid | — |
-| Wazuh high-severity alert (level 12+) | critical | Pass-through | from Wazuh |
+## What building this taught me
 
-Tactic names follow ATT&CK v20.0, which split the old *Defense Evasion* tactic into **Stealth** and **Defense Impairment**. To rebuild the pinned matrix:
+*(Draft written from the actual work. Edit it into your own voice.)*
 
-```bash
-cd backend && uv run python scripts/build_attack.py 20.0
-```
+- **Threat models change what "correct" means.** Logs are attacker-controlled, so the raw-log renderer only emits text nodes, the report escapes everything, and search is an AST, not string-building.
+- **Detection quality is mostly about what you exclude.** Windows logs 4672 for every admin logon; without excluding machine accounts and pairing it with business hours, the rule would never stop firing. Correlation had the same lesson: a scanner must not merge into a host incident.
+- **Standards move.** ATT&CK v20 split Defense Evasion and revoked T1070.001; a test that validates IDs against the official data caught it.
+- **Sequence rules need event-time thinking.** Windows are measured in event time, so uploading last week's logs after this week's gives the same alerts, and re-running a retro-hunt is idempotent.
+- **Real data finds bugs fixtures don't.** Real EVTX samples exposed a Windows group literally named "None" being dropped, and group-membership events that log only a SID.
 
-## Supported log sources
+## Known limits
 
-| Source | Accepted as |
-|---|---|
-| Linux auth | `auth.log` / `secure`, classic or RFC 3339 syslog |
-| Windows Security & Sysmon | `.evtx`, `evtx_dump` JSON, PowerShell `Get-WinEvent \| ConvertTo-Json` (UTF-8 or UTF-16) |
-| Web server | nginx / Apache Common or Combined |
-| Wazuh | `alerts.json`; Windows/Sysmon and sshd alerts are unpacked into the same schema |
-| Anything else | JSON Lines with a field mapping |
-
-### Live ingest
-
-Create an ingest token in the UI (**Ingest → Live ingest tokens**), then run this on the machine that has the log:
-
-```bash
-export SIGNAL_INGEST_TOKEN=sig_...
-python3 tools/signal_tail.py /var/log/auth.log --format linux_auth --url https://your-signal-host
-```
-
-## Run it
-
-### Docker (one command)
-
-```bash
-cp .env.example .env   # set SIGNAL_ADMIN_EMAIL and a 12+ character SIGNAL_ADMIN_PASSWORD
-docker compose up --build
-```
-
-Open <http://localhost:8080> and sign in with the admin account from `.env`. There are no default credentials.
-
-### Dev mode (no Docker)
-
-Requires [uv](https://docs.astral.sh/uv/) and Node 22+.
-
-```bash
-cp .env.example .env
-make install
-make dev        # API on :8000, UI on http://localhost:5173
-```
-
-## Security of the tool itself
-
-A SIEM holds sensitive data, so SIGNAL is hardened like one:
-
-- Argon2 password hashing, role-based access, and an audit trail on every triage action
-- Rate limits on login and ingest; upload size caps
-- No default credentials: the first admin must be set in `.env`
-- Raw log lines are rendered as inert text, so a malicious log can't inject script into the console
-- XML parsing via `defusedxml`
-- Docker: read-only containers, `no-new-privileges`, API not published (only reachable through the web container), security headers on nginx
-
-## Tests and code quality
-
-```bash
-make test       # ~150 pytest tests + Vitest component tests
-make lint       # ruff, mypy --strict, eslint (strict type-checked), prettier, tsc
-```
-
-The tests cover parsers for every source, every detection rule (positive and negative), correlation and scoring, auth and permissions, the ingest and triage APIs, and the live shipper.
-
-## Project layout
-
-```
-backend/   FastAPI + SQLModel API (Python 3.12), Alembic migrations, pytest
-  rules/   YAML detection rules
-frontend/  React 18 + TypeScript + Vite + Tailwind v4 console, Vitest
-tools/     signal_tail.py live shipper
-scripts/   dev runner
-```
+- The Docker setup is written but has not been run end to end by the author.
+- The printable report is print-to-PDF from the browser (no server-side PDF renderer).
+- No Lighthouse score has been recorded; accessibility was verified with axe-core and computed contrast.
+- v1 has no MFA/SSO and is single-tenant; see [SECURITY.md](SECURITY.md).
 
 ## Roadmap
 
-- [x] Auth, roles and audit trail
-- [x] Ingest for every v1 source, plus live shipping
-- [x] Detection engine and 16 ATT&CK-mapped rules, with retro-hunt
-- [x] Correlation, incident scoring and triage console
-- [ ] Investigation: entity pages, entity graph, hunt query language
-- [ ] Overview: live event trace, ATT&CK coverage strip, incident report export
-- [ ] Seeded demo data with planted attack scenarios
-- [ ] Wazuh home-lab connector (`logall_json` archives, not just alerts)
-- [ ] Sigma rule import; threat-intel enrichment (AbuseIPDB, VirusTotal)
+Sigma rule import · Postgres · threat-intel enrichment (VirusTotal, AbuseIPDB) · Wazuh live integration (pull and active response) · server-side PDF · SSO.
 
-## Author
+## Layout
 
-Built by **Junya (Stanford Mazibuko)**: Network Systems student, aspiring SOC analyst, Johannesburg.
+```
+backend/    FastAPI API, detection engine, correlator, search, reports, rules/, tests
+frontend/   React console and component tests
+tools/      signal_tail.py (live shipper) and seed/ (synthetic data)
+e2e/        Playwright end-to-end test
+docs/       scenarios.md and screenshots
+```
+
+ATT&CK® is a registered trademark of The MITRE Corporation; ATT&CK data is used under the [ATT&CK Terms of Use](https://attack.mitre.org/resources/legal-and-branding/terms-of-use/). The sample EVTX files in `backend/tests/fixtures/ingest/evtx` come from [omerbenamram/evtx](https://github.com/omerbenamram/evtx) (Apache-2.0).
