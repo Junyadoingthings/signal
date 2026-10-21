@@ -105,3 +105,19 @@ export const ExternalIcon = (p: SVGProps<SVGSVGElement>) => (
     <path d="M9.5 2.5h4v4M13.5 2.5 7.5 8.5M11.5 9.5v3.25c0 .4-.35.75-.75.75h-7.5a.75.75 0 0 1-.75-.75v-7.5c0-.4.35-.75.75-.75H6.5" />
   </Icon>
 );
+
+export const AlertsIcon = (p: SVGProps<SVGSVGElement>) => (
+  <Icon {...p}>
+    <path d="M8 2.25 14 13H2z" />
+    <path d="M8 6.5v3M8 11.25h.01" />
+  </Icon>
+);
+
+export const IncidentsIcon = (p: SVGProps<SVGSVGElement>) => (
+  <Icon {...p}>
+    <circle cx="3.5" cy="11.5" r="1.5" />
+    <circle cx="8" cy="5" r="1.5" />
+    <circle cx="12.5" cy="9.5" r="1.5" />
+    <path d="M4.4 10.3 7.1 6.2M9.2 5.9l2.4 2.5" />
+  </Icon>
+);

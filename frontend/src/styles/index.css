@@ -204,3 +204,52 @@
     animation: none;
   }
 }
+
+/* New alert: amber edge that fades out. */
+@keyframes fresh-row {
+  from {
+    background-color: var(--accent-soft);
+    box-shadow: inset 2px 0 0 var(--accent);
+  }
+  to {
+    background-color: transparent;
+    box-shadow: inset 2px 0 0 transparent;
+  }
+}
+.row-fresh {
+  animation: fresh-row 2.4s var(--ease-std) both;
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+.inspector-in {
+  animation: slide-in-right var(--dur-slow) var(--ease-std);
+}
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.story-path {
+  stroke-dasharray: 1;
+  animation: draw 900ms var(--ease-std) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row-fresh {
+    animation: none;
+    box-shadow: inset 2px 0 0 var(--accent);
+  }
+  .inspector-in,
+  .story-path {
+    animation: none;
+  }
+}

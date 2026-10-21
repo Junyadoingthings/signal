@@ -6,11 +6,15 @@ import { UsersPage } from "@/features/admin/UsersPage";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { BatchPage } from "@/features/ingest/BatchPage";
 import { IngestPage } from "@/features/ingest/IngestPage";
+import { AlertsPage } from "@/features/alerts/AlertsPage";
+import { IncidentPage } from "@/features/incidents/IncidentPage";
+import { IncidentsPage } from "@/features/incidents/IncidentsPage";
 import { OverviewPage } from "@/features/overview/OverviewPage";
 import { RulePage } from "@/features/rules/RulePage";
 import { RulesPage } from "@/features/rules/RulesPage";
 import { ApiError } from "@/lib/api";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { LiveProvider } from "@/lib/live";
 import { ThemeProvider } from "@/lib/theme";
 import type { Role } from "@/lib/types";
 import { NotFound } from "./NotFound";
@@ -21,7 +25,11 @@ function RequireAuth() {
   const location = useLocation();
   if (loading) return <BootScreen />;
   if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
-  return <Outlet />;
+  return (
+    <LiveProvider enabled>
+      <Outlet />
+    </LiveProvider>
+  );
 }
 
 function RequireRole({ role, children }: { role: Role; children: ReactNode }) {
@@ -48,6 +56,9 @@ export const routes = [
         element: <Shell />,
         children: [
           { index: true, element: <OverviewPage /> },
+          { path: "alerts", element: <AlertsPage />, handle: { fullBleed: true } },
+          { path: "incidents", element: <IncidentsPage /> },
+          { path: "incidents/:id", element: <IncidentPage /> },
           { path: "ingest", element: <IngestPage /> },
           { path: "ingest/batches/:id", element: <BatchPage /> },
           { path: "rules", element: <RulesPage /> },

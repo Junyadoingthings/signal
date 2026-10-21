@@ -1,4 +1,5 @@
 import { Command } from "cmdk";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import { ArrowIcon, KeyboardIcon, LogoutIcon, MoonIcon, SunIcon } from "@/components/icons";
 import { Kbd } from "@/components/ui";
@@ -26,6 +27,9 @@ export function CommandPalette({ open, onOpenChange, onShowShortcuts }: Props) {
   const { user, logout } = useAuth();
   const { resolved, toggle } = useTheme();
 
+  const [search, setSearch] = useState("");
+  const num = /^#?(\d{1,9})$/.exec(search.trim())?.[1];
+
   const run = (fn: () => void) => () => {
     onOpenChange(false);
     fn();
@@ -43,6 +47,8 @@ export function CommandPalette({ open, onOpenChange, onShowShortcuts }: Props) {
       <div className="flex items-center gap-3 border-b border-border px-4">
         <Command.Input
           autoFocus
+          value={search}
+          onValueChange={setSearch}
           placeholder="Jump to a page or run a command…"
           className="h-12 flex-1 bg-transparent text-md text-fg outline-none placeholder:text-fg-faint"
         />
@@ -50,6 +56,33 @@ export function CommandPalette({ open, onOpenChange, onShowShortcuts }: Props) {
       </div>
       <Command.List className="max-h-[min(60vh,24rem)] overflow-y-auto overscroll-contain py-1">
         <Command.Empty className="px-4 py-8 text-center text-fg-muted">No matches.</Command.Empty>
+
+        {num ? (
+          <Command.Group heading="Open by number" className={groupCls}>
+            <Command.Item
+              value={`open alert ${num}`}
+              keywords={[search]}
+              onSelect={run(() => {
+                void navigate(`/alerts?view=all&alert=${num}`);
+              })}
+              className={itemCls}
+            >
+              <span className="flex-1">Open alert #{num}</span>
+              <ArrowIcon className="size-3.5 opacity-50" />
+            </Command.Item>
+            <Command.Item
+              value={`open incident ${num}`}
+              keywords={[search]}
+              onSelect={run(() => {
+                void navigate(`/incidents/${num}`);
+              })}
+              className={itemCls}
+            >
+              <span className="flex-1">Open incident #{num}</span>
+              <ArrowIcon className="size-3.5 opacity-50" />
+            </Command.Item>
+          </Command.Group>
+        ) : null}
 
         <Command.Group heading="Go to" className={groupCls}>
           {navFor(user?.role).map((n) => (

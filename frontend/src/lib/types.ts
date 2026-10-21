@@ -198,3 +198,104 @@ export interface DetectionSettings {
   business_end: string;
   business_days: number[];
 }
+
+export type AlertStatus = "new" | "investigating" | "closed";
+export type Verdict = "true_positive" | "false_positive" | "benign_true_positive";
+
+export interface AlertRow extends Alert {
+  rule_title: string;
+  tactic: string | null;
+  assignee_id: number | null;
+  assignee_name: string | null;
+  acknowledged_at: string | null;
+  closed_at: string | null;
+}
+
+export interface AlertList {
+  items: AlertRow[];
+  total: number;
+  offset: number;
+  limit: number;
+}
+
+export interface AlertDetail {
+  alert: AlertRow;
+  rule: {
+    id: string;
+    title: string;
+    description: string;
+    severity: Severity;
+    logic_type: string;
+    primary_tactic: string | null;
+    techniques: TechniqueRef[];
+    false_positives: string[];
+  };
+  events: EventRecord[];
+  events_total: number;
+}
+
+export interface Note {
+  id: number;
+  author_id: number;
+  author_name: string;
+  markdown: string;
+  created_at: string;
+}
+
+export interface HistoryEntry {
+  kind: "audit" | "note";
+  ts: string;
+  actor: string | null;
+  action?: string | null;
+  before?: Record<string, unknown> | null;
+  after?: Record<string, unknown> | null;
+  note?: Note | null;
+}
+
+export interface Incident {
+  id: number;
+  title: string;
+  score: number;
+  severity: Severity;
+  status: AlertStatus;
+  verdict: Verdict | null;
+  assignee_id: number | null;
+  tactics: string[];
+  entities: { host?: string[]; user?: string[]; src_ip?: string[] };
+  alert_count: number;
+  first_event_at: string;
+  last_event_at: string;
+  created_at: string;
+  updated_at: string;
+  closed_at: string | null;
+}
+
+export interface StoryStep {
+  alert_id: number;
+  rule_id: string;
+  title: string;
+  tactic: string | null;
+  techniques: string[];
+  severity: Severity;
+  time: string;
+  status: AlertStatus;
+}
+
+export interface IncidentDetail {
+  incident: Incident;
+  alerts: AlertRow[];
+  storyline: StoryStep[];
+}
+
+export interface UserBrief {
+  id: number;
+  display_name: string;
+  role: Role;
+}
+
+export interface TriagePatch {
+  status?: AlertStatus;
+  verdict?: Verdict;
+  assignee_id?: number;
+  unassign?: boolean;
+}

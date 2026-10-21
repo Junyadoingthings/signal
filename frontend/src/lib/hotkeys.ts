@@ -19,7 +19,16 @@ interface HotkeyOptions {
   shift?: boolean;
   /** Fire even while focus is in a text field (only sensible with `mod`). */
   allowInInputs?: boolean;
+  /** Don't fire while a button/link/menu or an open dialog has focus. */
+  ignoreInteractive?: boolean;
   enabled?: boolean;
+}
+
+function isInteractiveTarget(el: EventTarget | null): boolean {
+  return (
+    el instanceof HTMLElement &&
+    el.closest("button, a, select, summary, dialog, [role=dialog], [role=menu]") !== null
+  );
 }
 
 /**
@@ -35,7 +44,13 @@ export function useHotkey(
   useLayoutEffect(() => {
     ref.current = handler;
   });
-  const { mod = false, shift, allowInInputs = false, enabled = true } = opts;
+  const {
+    mod = false,
+    shift,
+    allowInInputs = false,
+    ignoreInteractive = false,
+    enabled = true,
+  } = opts;
 
   useEffect(() => {
     if (!enabled) return;
@@ -46,6 +61,7 @@ export function useHotkey(
       if (!mod && (e.metaKey || e.ctrlKey || e.altKey)) return;
       if (shift !== undefined && shift !== e.shiftKey) return;
       if (!allowInInputs && isTypingTarget(e.target)) return;
+      if (ignoreInteractive && isInteractiveTarget(e.target)) return;
       e.preventDefault();
       ref.current(e);
     };
@@ -53,5 +69,5 @@ export function useHotkey(
     return () => {
       window.removeEventListener("keydown", onKey);
     };
-  }, [key, mod, shift, allowInInputs, enabled]);
+  }, [key, mod, shift, allowInInputs, ignoreInteractive, enabled]);
 }

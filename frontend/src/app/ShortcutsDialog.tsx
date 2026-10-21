@@ -6,6 +6,12 @@ export const SHORTCUTS: { keys: string[]; label: string }[] = [
   { keys: [modKeyLabel, "K"], label: "Open command palette" },
   { keys: ["?"], label: "Show keyboard shortcuts" },
   { keys: ["Esc"], label: "Close palette, dialog or panel" },
+  { keys: ["j", "k"], label: "Alerts: move down / up" },
+  { keys: ["Enter"], label: "Alerts: open in inspector" },
+  { keys: ["x"], label: "Alerts: select for bulk actions" },
+  { keys: ["e"], label: "Alerts: triage (assign / close)" },
+  { keys: ["/"], label: "Alerts: search" },
+  { keys: ["1–5"], label: "Triage menu: pick an action" },
 ];
 
 export function ShortcutsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {

@@ -1,10 +1,11 @@
 import { clsx } from "clsx";
 import { useState } from "react";
-import { NavLink, Outlet, useLocation } from "react-router";
+import { NavLink, Outlet, useLocation, useMatches } from "react-router";
 import { LogoutIcon, MoonIcon, SearchIcon, SunIcon } from "@/components/icons";
 import { Kbd, LogoMark } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
 import { modKeyLabel, useHotkey } from "@/lib/hotkeys";
+import { useLive } from "@/lib/live";
 import { useTheme } from "@/lib/theme";
 import { CommandPalette } from "./CommandPalette";
 import { NAV, navFor } from "./nav";
@@ -13,6 +14,7 @@ import { ShortcutsDialog } from "./ShortcutsDialog";
 export function Shell() {
   const { user, logout } = useAuth();
   const { resolved, toggle } = useTheme();
+  const { connected } = useLive();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const location = useLocation();
@@ -28,6 +30,9 @@ export function Shell() {
     setShortcutsOpen(true);
   });
 
+  const fullBleed = useMatches().some(
+    (m) => (m.handle as { fullBleed?: boolean } | undefined)?.fullBleed,
+  );
   const items = navFor(user?.role);
   const current = NAV.find((n) =>
     n.to === "/" ? location.pathname === "/" : location.pathname.startsWith(n.to),
@@ -137,6 +142,16 @@ export function Shell() {
             </span>
           </button>
 
+          <span
+            className="hidden items-center gap-1.5 text-2xs text-fg-faint sm:inline-flex"
+            title={connected ? "Receiving live updates" : "Live updates disconnected; retrying"}
+          >
+            <span
+              aria-hidden="true"
+              className={clsx("size-1.5 rounded-full", connected ? "bg-ok" : "bg-fg-faint")}
+            />
+            {connected ? "live" : "offline"}
+          </span>
           <div className="hidden items-center gap-2.5 md:flex" title={user?.email}>
             <span
               aria-hidden="true"
@@ -154,7 +169,10 @@ export function Shell() {
         <main
           id="main"
           tabIndex={-1}
-          className="min-h-0 flex-1 overflow-y-auto px-4 py-6 outline-none sm:px-8 sm:py-8"
+          className={clsx(
+            "min-h-0 flex-1 outline-none",
+            fullBleed ? "overflow-hidden" : "overflow-y-auto px-4 py-6 sm:px-8 sm:py-8",
+          )}
         >
           <Outlet />
         </main>

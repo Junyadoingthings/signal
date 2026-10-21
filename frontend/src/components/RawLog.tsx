@@ -1,5 +1,5 @@
 import { clsx } from "clsx";
-import { useMemo } from "react";
+import { Fragment, useMemo, type ReactNode } from "react";
 import { tokenize, type Kind } from "./tokenize";
 
 /**
@@ -20,16 +20,48 @@ const KIND_CLASS: Record<Kind, string> = {
   text: "text-fg",
 };
 
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Splits text on highlight terms (case-insensitive) and wraps them in <mark>. */
+function marked(text: string, rx: RegExp | null, keyPrefix: string): ReactNode {
+  if (!rx) return text;
+  const parts = text.split(rx);
+  if (parts.length === 1) return text;
+  return parts.map((p, i) =>
+    i % 2 === 1 ? (
+      <mark
+        key={`${keyPrefix}-${String(i)}`}
+        className="rounded-xs bg-accent-soft text-accent-fg ring-1 ring-accent/40"
+      >
+        {p}
+      </mark>
+    ) : (
+      p
+    ),
+  );
+}
+
 export function RawLog({
   raw,
   className,
   wrap = true,
+  highlight = [],
 }: {
   raw: string;
   className?: string;
   wrap?: boolean;
+  /** Literal substrings to mark (e.g. the values that made a rule fire). */
+  highlight?: string[];
 }) {
   const tokens = useMemo(() => tokenize(raw), [raw]);
+  const rx = useMemo(() => {
+    const terms = [...new Set(highlight.filter((h) => h.length >= 2))].sort(
+      (a, b) => b.length - a.length,
+    );
+    return terms.length ? new RegExp(`(${terms.map(escapeRegex).join("|")})`, "gi") : null;
+  }, [highlight]);
   return (
     <pre
       className={clsx(
@@ -41,10 +73,10 @@ export function RawLog({
       <code>
         {tokens.map((t, i) =>
           t.kind === "text" ? (
-            t.text
+            <Fragment key={i}>{marked(t.text, rx, String(i))}</Fragment>
           ) : (
             <span key={i} className={KIND_CLASS[t.kind]}>
-              {t.text}
+              {marked(t.text, rx, String(i))}
             </span>
           ),
         )}
